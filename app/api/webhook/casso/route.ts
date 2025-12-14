@@ -37,9 +37,9 @@ export async function POST(request: Request) {
              const amount = txn.amount || txn.transferAmount || 0;
              const bankTransId = txn.id || txn.transactionID || txn.referenceCode || `txn_${Date.now()}`;
              
-             // Extract User ID from "NAP {ID}"
-             // Handles: "NAP 123", "Nap123", "NAP: 123"
-             const match = description.match(/NAP\s*[:]?\s*(\d+)/i);
+             // Extract User ID from "GUMZ {ID}"
+             // Handles: "GUMZ 123", "Gumz123", "GUMZ: 123"
+             const match = description.match(/GUMZ\s*[:]?\s*(\d+)/i);
              const userId = match ? match[1] : null;
 
              if (userId) {
