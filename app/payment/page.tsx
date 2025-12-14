@@ -158,21 +158,22 @@ function PaymentCard() {
 
           {/* QR Code or Expired State */}
           <div className="relative mx-auto w-fit">
-            {isExpired ? (
-              <div className="w-48 h-48 bg-neutral-800 rounded-xl flex flex-col items-center justify-center border-2 border-red-500">
-                <ShieldCheck className="w-12 h-12 text-red-500 mb-2" />
-                <span className="text-red-500 font-bold">ĐÃ HẾT HẠN</span>
-              </div>
-            ) : status === "success" ? (
+            {status === "success" ? (
               <div className="w-48 h-48 bg-green-900/20 rounded-xl flex flex-col items-center justify-center border-2 border-green-500">
                 <Check className="w-16 h-16 text-green-500 mb-2" />
               </div>
             ) : (
-              <div className="bg-white p-4 rounded-xl shadow-inner relative group">
+              <div
+                className={`bg-white p-4 rounded-xl shadow-inner relative group ${
+                  isExpired ? "border-4 border-red-500" : ""
+                }`}
+              >
                 <img
                   src={qrUrl}
                   alt="Payment QR"
-                  className="w-48 h-48 object-contain"
+                  className={`w-48 h-48 object-contain ${
+                    isExpired ? "opacity-80" : ""
+                  }`}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
                       "https://placehold.co/200x200?text=QR+Error";
@@ -183,16 +184,25 @@ function PaymentCard() {
                     Scan with App
                   </span>
                 </div>
+                {isExpired && (
+                  <div className="absolute -top-3 -right-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+                    HẾT HẠN
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* Logic Messages */}
           {isExpired ? (
-            <div className="bg-red-900/30 border border-red-800 p-3 rounded-lg text-center">
-              <p className="text-red-200 text-sm">
-                Giao dịch đã quá hạn 10 phút. Vui lòng tạo lệnh mới lệnh
-                Discord. Không chuyển khoản vào lúc này.
+            <div className="bg-red-900/40 border border-red-500/50 p-3 rounded-lg text-center">
+              <p className="text-red-200 text-sm font-bold">
+                ⚠️ GIAO DỊCH ĐÃ HẾT HẠN
+              </p>
+              <p className="text-red-300 text-xs mt-1">
+                Mã đã hết hạn. Bạn vẫn có thể quét, nhưng giao dịch sẽ{" "}
+                <b>KHÔNG ĐƯỢC TÍNH</b> tự động và chúng tôi{" "}
+                <b>KHÔNG CHỊU TRÁCH NHIỆM</b>.
               </p>
             </div>
           ) : (
