@@ -29,6 +29,15 @@ function PaymentCard() {
         ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|${MOMO_PHONE}|${BANK_NAME}|0|0|0|${amountNum}|${content}|transfer_myqr`
         : `https://img.vietqr.io/image/${BANK_ID}-${BANK_ACCOUNT}-compact.png?amount=${amount}&addInfo=${content}&accountName=${encodeURIComponent(BANK_NAME)}`;
     
+    // VNPAY often uses the same VietQR standard for bank transfers, or a specific merchant QR. 
+    // If it's a personal flow, scanning the Bank QR with VNPAY app works.
+    
+    const methodIcon = () => {
+        if (method === "Momo") return <Smartphone className="w-6 h-6" />;
+        if (method === "VNPAY") return <CreditCard className="w-6 h-6" />; // Use generic or custom icon
+        return <CreditCard className="w-6 h-6" />;
+    };
+
     const handleCopy = (text: string, field: string) => {
         navigator.clipboard.writeText(text);
         setCopied(field);
@@ -62,10 +71,14 @@ function PaymentCard() {
                 className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden relative"
             >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-6 text-center">
+                <div className={`p-6 text-center bg-gradient-to-r ${
+                    method === 'Momo' ? 'from-pink-600 to-red-600' :
+                    method === 'VNPAY' ? 'from-blue-500 to-blue-700' :
+                    'from-blue-600 to-violet-600'
+                }`}>
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
-                        {method === "Momo" ? <Smartphone className="w-6 h-6" /> : <CreditCard className="w-6 h-6" />}
-                        Cổng Thanh Toán
+                        {methodIcon()}
+                        Cổng Thanh Toán {method === 'VIETQR' ? 'VietQR' : method}
                     </h1>
                     <p className="text-white/80 text-sm mt-1">Hoàn tất giao dịch để nhận Coinz</p>
                 </div>
@@ -80,7 +93,7 @@ function PaymentCard() {
                     </div>
 
                     {/* QR Code */}
-                    <div className="bg-white p-4 rounded-xl mx-auto w-fit shadow-inner">
+                    <div className="bg-white p-4 rounded-xl mx-auto w-fit shadow-inner relative group">
                         <img 
                             src={qrUrl} 
                             alt="Payment QR" 
@@ -89,11 +102,20 @@ function PaymentCard() {
                                 (e.target as HTMLImageElement).src = "https://placehold.co/200x200?text=QR+Error";
                             }}
                         />
+                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10 rounded-xl">
+                            <span className="text-xs text-black font-medium bg-white/80 px-2 py-1 rounded">Scan to Pay</span>
+                        </div>
                     </div>
                     
                     {method === "Momo" && (
                         <p className="text-xs text-center text-yellow-500">
                             *Lưu ý: Đối với Momo, vui lòng nhập đúng Lời nhắn chuyển tiền.
+                        </p>
+                    )}
+
+                    {method === "VNPAY" && (
+                         <p className="text-xs text-center text-blue-400">
+                            *Mở ứng dụng VNPAY hoặc App Ngân hàng để quét mã.
                         </p>
                     )}
 
