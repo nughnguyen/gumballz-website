@@ -200,9 +200,7 @@ function PaymentCard() {
                 ⚠️ GIAO DỊCH ĐÃ HẾT HẠN
               </p>
               <p className="text-red-300 text-xs mt-1">
-                Mã đã hết hạn. Bạn vẫn có thể quét, nhưng giao dịch sẽ{" "}
-                <b>KHÔNG ĐƯỢC TÍNH</b> tự động và chúng tôi{" "}
-                <b>KHÔNG CHỊU TRÁCH NHIỆM</b>.
+                Mã đã hết hạn, vui lòng tạo lại lệnh mới.
               </p>
             </div>
           ) : (
