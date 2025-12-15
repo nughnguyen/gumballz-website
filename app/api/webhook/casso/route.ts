@@ -30,8 +30,8 @@ export async function POST(request: Request) {
              const amount = txn.amount || txn.transferAmount || 0;
              const bankTransId = txn.id || txn.transactionID || txn.referenceCode || `txn_${Date.now()}`;
              
-             // Extract Token from "GUMZ {TOKEN}" - Supports "GUMZ 123456", "GUMZ:123456", "GUMZ+123456"
-             const match = description.match(/GUMZ\s*[+:\s]?\s*(\d+)/i);
+             // Extract Token from "GUMZ {TOKEN}" or "NAP {TOKEN}" - Supports "GUMZ 123456", "NAP 123456"
+             const match = description.match(/(?:GUMZ|NAP)\s*[+:\s]?\s*(\d+)/i);
              let token = match ? match[1] : null;
 
              if (token) {

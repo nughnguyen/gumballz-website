@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, Gamepad2, Info, ArrowRight, CheckCircle2 } from "lucide-react";
+import { CreditCard, Gamepad2, Info, ArrowRight, CheckCircle2, Coins } from "lucide-react";
 
 // Define Packages
 const PACKAGES = [
@@ -21,31 +21,76 @@ export default function Home() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"coinz" | "other">("coinz");
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>("");
   const [discordId, setDiscordId] = useState("");
   const [showGuide, setShowGuide] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const handleDonate = () => {
-    if (!selectedPackage) return;
+  // Helper to handle package selection
+  const handleSelectPackage = (val: number) => {
+    setSelectedPackage(val);
+    setCustomAmount(""); // Clear custom amount if package selected
+  };
+
+  const handleDonate = async () => {
+    const amount = selectedPackage || (customAmount ? parseInt(customAmount) : 0);
+    if (!amount || amount < 1000) {
+        alert("Vui lòng nhập số tiền tối thiểu 1.000 VNĐ");
+        return;
+    }
+    
+    setIsCreating(true);
     
     // Use entered ID or default dev ID
     const finalId = discordId.trim() || DEFAULT_DEV_ID; 
 
     // Generate a simple unique transaction content
-    // Format: "NAP" + last 5 chars of ID + Random 4 digits
-    // This keeps it short enough for bank transfer content limits often found in banking apps
-    const shortId = finalId.length > 5 ? finalId.slice(-5) : finalId;
-    const uniqueCode = "NAP" + shortId + Math.floor(1000 + Math.random() * 9000);
+    // Format: "NAP" + 6 random digits (Matches webhook logic which prefers 6-digit codes)
+    const uniqueCode = "NAP" + Math.floor(100000 + Math.random() * 900000);
 
-    const params = new URLSearchParams({
-      amount: selectedPackage.toString(),
-      content: uniqueCode,
-      userId: finalId,
-      method: "VIETQR", 
-      expiry: "600", // 10 minutes
-    });
+    try {
+        // Create transaction in Supabase
+        const res = await fetch("/api/create-transaction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                amount,
+                userId: finalId,
+                content: uniqueCode,
+                method: "VIETQR"
+            })
+        });
 
-    router.push("/payment?" + params.toString());
+        const data = await res.json();
+        
+        if (!data.success) {
+            console.error("Failed to create transaction:", data.error);
+            alert("Có lỗi xảy ra khi tạo giao dịch. Vui lòng thử lại.");
+            setIsCreating(false);
+            return;
+        }
+
+        // Calculate absolute expiry time (10 minutes from now)
+        // Pass timestamp in milliseconds
+        const expiryTimestamp = Date.now() + 10 * 60 * 1000;
+
+        const params = new URLSearchParams({
+            amount: amount.toString(),
+            content: uniqueCode,
+            userId: finalId,
+            method: "VIETQR", 
+            expiry: expiryTimestamp.toString(), 
+        });
+
+        router.push("/payment?" + params.toString());
+    } catch (error) {
+        console.error("Error creating transaction:", error);
+        alert("Có lỗi kết nối. Vui lòng thử lại.");
+        setIsCreating(false);
+    }
   };
+
+  const currentAmount = selectedPackage || (customAmount ? parseInt(customAmount) : 0);
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30 font-sans flex flex-col items-center relative overflow-hidden">
@@ -112,7 +157,7 @@ export default function Home() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    onClick={() => setSelectedPackage(pkg.value)}
+                                    onClick={() => handleSelectPackage(pkg.value)}
                                     className={`relative group p-6 rounded-2xl border transition-all duration-300 text-left hover:-translate-y-1 ${
                                         selectedPackage === pkg.value 
                                         ? "bg-blue-600/10 border-blue-500 shadow-[0_0_30px_-10px_rgba(59,130,246,0.5)]" 
@@ -133,6 +178,43 @@ export default function Home() {
                                 </motion.button>
                             ))}
                         </div>
+                        
+                        {/* Custom Amount Input */}
+                         <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="bg-neutral-900/30 border border-neutral-800 rounded-2xl p-4 flex items-center gap-4 hover:border-neutral-700 transition-colors"
+                        >
+                            <div className="bg-neutral-800 p-3 rounded-xl">
+                                <Coins className="w-6 h-6 text-yellow-500" />
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-xs text-neutral-500 font-medium block mb-1 uppercase tracking-wide">
+                                    Hoặc nhập số tiền tùy ý
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customAmount ? parseInt(customAmount).toLocaleString('vi-VN') : ''}
+                                    onChange={(e) => {
+                                        // Handle raw value change
+                                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                                        setCustomAmount(raw);
+                                        if (raw) setSelectedPackage(null);
+                                    }}
+                                    placeholder="Ví dụ: 50.000"
+                                    className="w-full bg-transparent text-xl font-bold text-white placeholder:text-neutral-600 outline-none"
+                                />
+                            </div>
+                            {customAmount && (
+                                <div className="text-right">
+                                    <div className="text-xs text-neutral-500">Quy đổi ước tính</div>
+                                    <div className="text-blue-400 font-bold">
+                                        ≈ {formatCurrency(parseInt(customAmount) * 10)} Coinz
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
 
                         {/* Input Section */}
                         <motion.div 
@@ -168,14 +250,18 @@ export default function Home() {
 
                             <button
                                 onClick={handleDonate}
-                                disabled={!selectedPackage}
+                                disabled={!currentAmount || isCreating}
                                 className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-                                    selectedPackage 
+                                    currentAmount && !isCreating
                                     ? "bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-500/20 transform active:scale-[0.98]" 
                                     : "bg-neutral-800 text-neutral-600 cursor-not-allowed"
                                 }`}
                             >
-                                Tiếp tục thanh toán <ArrowRight className="w-5 h-5" />
+                                {isCreating ? (
+                                    <>Đang tạo giao dịch...</>
+                                ) : (
+                                    <>Tiếp tục thanh toán <ArrowRight className="w-5 h-5" /></>
+                                )}
                             </button>
                         </motion.div>
                     </motion.div>

@@ -87,7 +87,15 @@ function PaymentCard() {
   useEffect(() => {
     if (!expiryParam) return;
 
-    const expiryTime = parseInt(expiryParam) * 1000; // Convert to ms
+    let expiryTime = parseInt(expiryParam);
+    // If param is small (e.g. 600 seconds), treat as duration from *old* flow (which means it's broken anyway as we don't know start time)
+    // But since we updated Main Page to send TIMESTAMP, we expect a large number.
+    // If it is small, multiply by 1000. But wait, old flow passed "600". That was intended to be "expires in 600s from creation".
+    // But since the URL doesn't have creation time, "600" is ambiguous.
+    // Assuming new flow passes timestamp (ms).
+    if (expiryTime < 10000000000) {
+        expiryTime = expiryTime * 1000;
+    }
 
     const timer = setInterval(() => {
       const now = Date.now();
