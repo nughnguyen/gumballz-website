@@ -337,9 +337,9 @@ export default function Home() {
                     Sản phẩm phục vụ mục đích giải trí trong cộng đồng Discord.
                 </p>
                 <div className="flex justify-center gap-6 text-sm font-medium text-slate-600">
-                    <a href="#" className="hover:text-blue-600">Điều khoản</a>
-                    <a href="#" className="hover:text-blue-600">Bảo mật</a>
-                    <a href="#" className="hover:text-blue-600">Liên hệ</a>
+                    <a href="/terms" className="hover:text-blue-600 transition-colors">Điều khoản</a>
+                    <a href="/privacy" className="hover:text-blue-600 transition-colors">Bảo mật</a>
+                    <a href="/contact" className="hover:text-blue-600 transition-colors">Liên hệ</a>
                 </div>
             </div>
         </footer>
