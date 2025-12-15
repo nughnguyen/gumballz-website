@@ -24,11 +24,11 @@ export default function ContactPage() {
                 
                 <h1 className="text-2xl font-bold text-slate-900 mb-2">Nguyễn Quốc Hưng</h1>
                 <p className="text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full text-sm inline-block mb-6">
-                    Fullstack Developer
+                    Multi-field Developer
                 </p>
                 
                 <p className="text-slate-500 mb-8 leading-relaxed max-w-sm">
-                    Tác giả của GumballZ Bot và hệ thống thanh toán tự động. Đam mê xây dựng các sản phẩm công nghệ hữu ích cho cộng đồng.
+                    Tác giả của hệ sinh thái GumballZ và hệ thống thanh toán tự động. Đam mê xây dựng các sản phẩm công nghệ hữu ích cho cộng đồng.
                 </p>
 
                 <div className="flex gap-4">
@@ -49,7 +49,7 @@ export default function ContactPage() {
                         <MessageCircle className="w-6 h-6" />
                     </a>
                     <a 
-                        href="mailto:contact@nughnguyen.com" 
+                        href="mailto:hungnq.august.work@gmail.com" 
                         className="p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300"
                     >
                         <Mail className="w-6 h-6" />
@@ -81,14 +81,14 @@ export default function ContactPage() {
                          <ContactItem 
                             icon={<Mail className="w-5 h-5" />}
                             label="Email"
-                            value="hungnguyen.dev@example.com"
-                            link="mailto:hungnguyen.dev@example.com"
+                            value="hungnq.august.work@gmail.com"
+                            link="mailto:hungnq.august.work@gmail.com"
                         />
                     </div>
                 </div>
 
                 <a 
-                    href="https://nughnguyen.github.io" 
+                    href="https://quochung.id.vn" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="block bg-linear-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-lg shadow-blue-600/20 group hover:shadow-blue-600/30 transition-all"
