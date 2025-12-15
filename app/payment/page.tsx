@@ -12,9 +12,24 @@ import {
   Loader2,
 } from "lucide-react";
 
-const BANK_ID = process.env.NEXT_PUBLIC_BANK_ID || "OCB";
-const BANK_ACCOUNT = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO || "0388205003";
-const BANK_NAME = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "NGUYEN QUOC HUNG";
+const BANK_1 = {
+  id: process.env.NEXT_PUBLIC_BANK_ID || "OCB",
+  account: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO || "0388205003",
+  name: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "NGUYEN QUOC HUNG",
+};
+
+const BANK_2 = {
+  id: process.env.NEXT_PUBLIC_BANK_ID_2,
+  account: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO_2,
+  name: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME_2,
+};
+
+// Available banks pool
+const BANKS = [BANK_1];
+if (BANK_2.id && BANK_2.account) {
+  BANKS.push(BANK_2 as typeof BANK_1);
+}
+
 const MOMO_PHONE = process.env.NEXT_PUBLIC_MOMO_PHONE || "0388205003";
 
 function PaymentCard() {
@@ -31,6 +46,17 @@ function PaymentCard() {
   const [status, setStatus] = useState("pending");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
+  
+  // Randomly select a bank on mount to distribute load/avoid limits
+  const [selectedBank, setSelectedBank] = useState(BANK_1);
+
+  useEffect(() => {
+    // Only run on client side to ensure consistency
+    if (BANKS.length > 1) {
+      const randomBank = BANKS[Math.floor(Math.random() * BANKS.length)];
+      setSelectedBank(randomBank);
+    }
+  }, []);
 
   const amountNum = parseInt(amount);
   const formattedAmount = new Intl.NumberFormat("vi-VN", {
@@ -40,9 +66,9 @@ function PaymentCard() {
 
   const qrUrl =
     method === "Momo"
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|${MOMO_PHONE}|${BANK_NAME}|0|0|0|${amountNum}|${content}|transfer_myqr`
-      : `https://img.vietqr.io/image/${BANK_ID}-${BANK_ACCOUNT}-compact.png?amount=${amount}&addInfo=${content}&accountName=${encodeURIComponent(
-          BANK_NAME
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|${MOMO_PHONE}|${BANK_1.name}|0|0|0|${amountNum}|${content}|transfer_myqr`
+      : `https://img.vietqr.io/image/${selectedBank.id}-${selectedBank.account}-compact.png?amount=${amount}&addInfo=${content}&accountName=${encodeURIComponent(
+          selectedBank.name
         )}`;
 
   const methodIcon = () => {
@@ -235,16 +261,16 @@ function PaymentCard() {
               />
             ) : (
               <>
-                <DetailRow label="Ngân hàng" value={BANK_ID} />
+                <DetailRow label="Ngân hàng" value={selectedBank.id} />
                 <DetailRow
                   label="Số tài khoản"
-                  value={BANK_ACCOUNT}
-                  onCopy={() => handleCopy(BANK_ACCOUNT, "acc")}
+                  value={selectedBank.account}
+                  onCopy={() => handleCopy(selectedBank.account, "acc")}
                   copied={copied === "acc"}
                 />
               </>
             )}
-            <DetailRow label="Chủ tài khoản" value={BANK_NAME} />
+            <DetailRow label="Chủ tài khoản" value={selectedBank.name} />
             <div className="border-t border-neutral-700 my-2"></div>
             <DetailRow
               label="Nội dung chuyển khoản"
