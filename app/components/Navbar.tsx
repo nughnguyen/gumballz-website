@@ -24,7 +24,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 relative rounded-xl overflow-hidden shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 ease-out">
               <Image 
-                src="/logo.jpg" 
+                src="/logo.png" 
                 alt="GumballZ Logo" 
                 fill
                 className="object-cover"

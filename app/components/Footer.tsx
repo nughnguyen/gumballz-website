@@ -13,7 +13,7 @@ export function Footer() {
              <Link href="/" className="flex items-center gap-2">
                 <div className="w-8 h-8 relative rounded-lg overflow-hidden shadow-sm">
                   <Image 
-                    src="/logo.jpg" 
+                    src="/logo.png" 
                     alt="Logo" 
                     fill 
                     className="object-cover"
