@@ -22,7 +22,7 @@ export function Navbar() {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-20 h-20 relative group-hover:scale-105 transition-transform duration-300 ease-out">
+            <div className="w-30 h-30 relative group-hover:scale-105 transition-transform duration-300 ease-out">
               <Image 
                 src="/logo.png" 
                 alt="GumballZ Logo" 
