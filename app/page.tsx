@@ -19,8 +19,8 @@ import Link from "next/link";
 
 // Define Packages
 const PACKAGES = [
-  { value: 10000, label: "10.000 VNĐ", bonus: "100.000 Gumball Coins", hot: false },
-  { value: 20000, label: "20.000 VNĐ", bonus: "200.000 Gumball Coins", hot: false },
+  { value: 10000, label: "10.000 VNĐ", bonus: "100.000 Coinz", hot: false },
+  { value: 20000, label: "20.000 VNĐ", bonus: "200.000 Coinz", hot: false },
   { value: 50000, label: "50.000 VNĐ", bonus: "500k + 50k Bonus", hot: true },
   { value: 100000, label: "100.000 VNĐ", bonus: "1M + 200k Bonus", hot: true },
   { value: 200000, label: "200.000 VNĐ", bonus: "2M + 500k Bonus", hot: false },
