@@ -19,10 +19,10 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-24">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-30 h-30 relative group-hover:scale-105 transition-transform duration-300 ease-out">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-20 h-20 relative group-hover:scale-105 transition-transform duration-300 ease-out">
               <Image 
                 src="/logo.png" 
                 alt="GumballZ Logo" 
@@ -31,10 +31,10 @@ export function Navbar() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-slate-800 leading-none">
+              <span className="text-xl font-bold tracking-tight text-slate-800 leading-none">
                 GumballZ
               </span>
-              <span className="text-[10px] font-medium text-blue-600 tracking-wider">PAYMENT</span>
+              <span className="text-xs font-medium text-blue-600 tracking-wider">PAYMENT</span>
             </div>
           </Link>
 

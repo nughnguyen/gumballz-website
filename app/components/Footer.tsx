@@ -51,7 +51,7 @@ export function Footer() {
              <ul className="space-y-3 text-sm text-slate-600">
                 <li className="flex items-start gap-3">
                    <Mail className="w-5 h-5 text-slate-400 shrink-0" />
-                   <span>support.gumballz@gmail.com</span>
+                   <span>contact.gumballz@gmail.com</span>
                 </li>
              </ul>
           </div>
