@@ -53,15 +53,28 @@ function PaymentCard() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   
-  // Randomly select a bank on mount
+  // Randomly select a bank on mount, or use forced provider
   const [selectedBank, setSelectedBank] = useState(BANK_1);
 
   useEffect(() => {
+    const providerParam = searchParams.get("provider"); // 'sepay' or 'casso'
+    
+    if (providerParam === "sepay" && BANKS.length > 1) {
+        // Force try to find the second bank (usually SePay)
+        // Checks if BANK_2 is in the list
+        const sepayBank = BANKS.find(b => b.id === BANK_2.id && b.account === BANK_2.account);
+        if (sepayBank) {
+            setSelectedBank(sepayBank);
+            return;
+        }
+    }
+
     if (BANKS.length > 1) {
+      // If no valid force param, use random
       const randomBank = BANKS[Math.floor(Math.random() * BANKS.length)];
       setSelectedBank(randomBank);
     }
-  }, []);
+  }, [searchParams]);
 
   const amountNum = parseInt(amount);
   const formattedAmount = new Intl.NumberFormat("vi-VN", {
