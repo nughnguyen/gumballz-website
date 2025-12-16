@@ -33,8 +33,14 @@ export async function POST(request: Request) {
              const amount = txn.amount || txn.transferAmount || 0;
              const bankTransId = txn.id || txn.transactionID || txn.referenceCode || `txn_${Date.now()}`;
              
-             // Extract Token from "GUMZ {TOKEN}" - Supports "GUMZ 123456", "GUMZ:123456", "GUMZ+123456"
-             const match = description.match(/GUMZ\s*[+:\s]?\s*(\d+)/i);
+             // Extract Token from "GUMZ {TOKEN}" - Supports "GUMZ 123456", "GUMZ:123456", "GUMZ-123456"
+             // Also supports fallback to finding any 6-digit number if prefix is missing
+             let match = description.match(/(?:GUMZ|Gumz|gumz)\s*[:.\- ]*\s*(\d+)/i);
+             if (!match) {
+                 // Fallback: Try to find any consecutive 6 digits
+                 match = description.match(/(\d{6})/);
+             }
+
              let token = match ? match[1] : null;
 
              if (token) {
@@ -42,6 +48,8 @@ export async function POST(request: Request) {
                  
                  // Handle Prefix/Suffix garbage
                  if (token.length < 15) {
+                     // If token is exactly 6 digits (or close to it), use it.
+                     // The previous logic trimmed > 6 chars, which is fine if we matched a longer number starting with the token.
                      if (token.length > 6) {
                          token = token.substring(0, 6);
                          console.log(`> Trimmed token to 6 digits: '${token}'`);
