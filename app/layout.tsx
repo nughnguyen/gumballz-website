@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "GumballZ Payment Gateway",
   description: "Cổng nạp GumballZ - Nạp Coinz tự động, an toàn, nhanh chóng.",
   icons: {
-    icon: '/logo.jpg',
+    icon: '/logo.png',
   },
 };
 

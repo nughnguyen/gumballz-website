@@ -11,12 +11,12 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2 space-y-4">
              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 relative rounded-lg overflow-hidden shadow-sm">
+                <div className="w-10 h-10 relative">
                   <Image 
                     src="/logo.png" 
                     alt="Logo" 
                     fill 
-                    className="object-cover"
+                    className="object-contain"
                   />
                 </div>
                 <span className="text-xl font-bold tracking-tight text-slate-900">
