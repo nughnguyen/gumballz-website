@@ -4,7 +4,7 @@ import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { amount, userId, content, method } = body;
+        const { amount, userId, content, method, metadata } = body;
 
         // Ensure amount is a number
         const amountNum = parseInt(amount);
@@ -15,12 +15,12 @@ export async function POST(request: Request) {
         const { data, error } = await supabase
             .from('transactions')
             .insert({
-                user_id: userId, // Assuming Supabase handles BigInt string or column is text
+                user_id: userId,
                 amount: amountNum,
                 description: content,
                 status: 'pending',
                 rewarded: false,
-                metadata: { method, user_created: true }
+                metadata: { ...metadata, method, user_created: true }
             })
             .select()
             .single();

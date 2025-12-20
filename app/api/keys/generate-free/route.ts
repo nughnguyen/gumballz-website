@@ -100,6 +100,7 @@ export async function POST() {
         key_value: keyValue,
         key_type: 'FREE',
         created_date: today,
+        duration_days: 1,
         expires_at: expiresAt.toISOString(),
         is_active: true,
         usage_count: 0,

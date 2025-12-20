@@ -20,6 +20,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { ChevronDown } from "lucide-react";
+
 export default function KeysPage() {
   const router = useRouter();
   const [loadingFree, setLoadingFree] = useState(false);
@@ -27,6 +29,18 @@ export default function KeysPage() {
   const [freeKeyExpiry, setFreeKeyExpiry] = useState("");
   const [copied, setCopied] = useState(false);
   const [loadingVIP, setLoadingVIP] = useState(false);
+  
+  const [duration, setDuration] = useState("30");
+  const [showDuration, setShowDuration] = useState(false);
+
+  const durations = [
+    { label: "1 Ngày", value: "1", price: 2000 },
+    { label: "7 Ngày", value: "7", price: 12000 },
+    { label: "30 Ngày", value: "30", price: 50000 },
+    { label: "365 Ngày", value: "365", price: 500000 },
+  ];
+
+  const selectedDuration = durations.find(d => d.value === duration) || durations[2];
 
   const fetchFreeKey = async () => {
     setLoadingFree(true);
@@ -51,19 +65,19 @@ export default function KeysPage() {
     setLoadingVIP(true);
     try {
       const content = `VIP${Math.floor(Math.random() * 900000 + 100000)}`;
-      const amount = 50000;
+      const amount = selectedDuration.price;
       
       const res = await fetch("/api/create-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: amount,
-          userId: "GUEST",
+          userId: "123456789", // Using a dummy BigInt for anonymous Mod Menu purchases
           content: content,
           method: "Banking",
           metadata: { 
             type: "key", 
-            duration_days: 30 
+            duration_days: parseInt(duration) 
           }
         })
       });
@@ -201,17 +215,59 @@ export default function KeysPage() {
                 </div>
               </div>
 
-              <h2 className="text-3xl font-bold mb-4 italic text-purple-100">KEY VIP 30 NGÀY</h2>
-              <p className="text-slate-400 mb-8 leading-relaxed">Không quảng cáo. Kích hoạt nhận key ngay lập tức. Tính 30 ngày từ lúc mua.</p>
+              <h2 className="text-3xl font-bold mb-4 italic text-purple-100">KEY VIP PREMIUM</h2>
+              <p className="text-slate-400 mb-8 leading-relaxed">Không quảng cáo. Kích hoạt nhận key ngay lập tức. Tính từ lúc mua.</p>
 
-              <div className="space-y-4 mb-10 grow">
-                <div className="flex items-center gap-3 text-slate-300">
-                  <ShieldCheck className="w-5 h-5 text-purple-400" />
-                  <span>Full tính năng VIP - Không quảng cáo</span>
+              <div className="space-y-6 mb-10 grow">
+                {/* Duration Picker */}
+                <div className="relative">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block ml-1">Chọn thời hạn</label>
+                  <button 
+                    onClick={() => setShowDuration(!showDuration)}
+                    className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 flex items-center justify-between hover:border-purple-500/50 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-5 h-5 text-purple-400" />
+                      <span className="font-bold text-white text-lg">{selectedDuration.label}</span>
+                    </div>
+                    <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform ${showDuration ? "rotate-180" : ""}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showDuration && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl"
+                      >
+                        {durations.map((d) => (
+                          <button
+                            key={d.value}
+                            onClick={() => {
+                              setDuration(d.value);
+                              setShowDuration(false);
+                            }}
+                            className={`w-full px-5 py-4 text-left flex items-center justify-between hover:bg-purple-600/10 transition-colors ${duration === d.value ? "bg-purple-600/10" : ""}`}
+                          >
+                            <span className={`font-bold ${duration === d.value ? "text-purple-400" : "text-slate-300"}`}>{d.label}</span>
+                            <span className="text-xs font-mono text-slate-500">{d.price.toLocaleString()}đ</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <div className="flex items-center gap-3 text-slate-300">
-                  <Zap className="w-5 h-5 text-purple-400" />
-                  <span>Tự động kích hoạt & nhận key ngay</span>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-slate-300">
+                    <ShieldCheck className="w-5 h-5 text-purple-400" />
+                    <span>Full tính năng VIP - Không quảng cáo</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-300">
+                    <Zap className="w-5 h-5 text-purple-400" />
+                    <span>Tự động kích hoạt & nhận key ngay</span>
+                  </div>
                 </div>
               </div>
 
@@ -225,7 +281,7 @@ export default function KeysPage() {
                   <Crown className="w-6 h-6" />
                 </button>
                 <div className="text-center text-slate-500 text-sm">
-                  Chỉ <span className="text-purple-400 font-bold">50.000đ</span> / 30 ngày
+                  Tổng thanh toán: <span className="text-purple-400 font-bold text-lg">{selectedDuration.price.toLocaleString()}đ</span>
                 </div>
               </div>
             </div>
