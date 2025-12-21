@@ -52,17 +52,19 @@ async function createYeulinkShortLink(destinationUrl: string): Promise<string> {
   try {
     const response = await fetch(yeulinkUrl, {
       method: 'GET',
-      redirect: 'manual' // Don't follow redirects
+      redirect: 'manual' // Don't follow redirects to capture the 302 Location
     });
     
-    // Yeulink returns the short link in Location header or response body
-    // For simplicity, we'll construct it manually based on their pattern
-    // In production, parse the actual response from yeulink
-    const shortId = Math.random().toString(36).substring(2, 10);
-    return `https://yeulink.com/${shortId}`;
+    const location = response.headers.get('location') || response.headers.get('Location');
+    
+    if (location) {
+        return location;
+    } else {
+        console.error('Yeulink API did not return a Location header');
+        return yeulinkUrl;
+    }
   } catch (error) {
     console.error('Error creating yeulink:', error);
-    // Fallback: construct URL directly (yeulink will create it on-the-fly)
     return yeulinkUrl;
   }
 }
