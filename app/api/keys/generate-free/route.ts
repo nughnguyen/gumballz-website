@@ -97,12 +97,17 @@ export async function POST() {
       .single();
 
     if (existingKey) {
-      return NextResponse.json({
-        success: true,
-        shortLink: existingKey.short_link,
-        expiresAt: existingKey.expires_at,
-        message: "Key hôm nay đã sẵn sàng"
-      });
+       // SECURITY FIX: Nếu là key cũ (không có token xác thực), xóa đi để tạo key mới an toàn hơn
+       if (!existingKey.verification_token) {
+           await supabase.from('mod_keys').delete().eq('id', existingKey.id);
+       } else {
+           return NextResponse.json({
+            success: true,
+            shortLink: existingKey.short_link,
+            expiresAt: existingKey.expires_at,
+            message: "Key hôm nay đã sẵn sàng"
+          });
+       }
     }
 
     // 2. Nếu chưa có, tạo mới
