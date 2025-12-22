@@ -73,6 +73,21 @@ export async function POST() {
   try {
     const today = getTodayDateString();
     
+    // AUTO-CLEANUP: Delete expired keys to optimize database
+    // This runs asynchronously and doesn't block the main request
+    (async () => {
+        try {
+            const { error } = await supabase
+                .from('mod_keys')
+                .delete()
+                .lt('expires_at', new Date().toISOString());
+            if (error) console.error("Auto-cleanup error:", error);
+        } catch (e) {
+            console.error("Auto-cleanup exception:", e);
+        }
+    })();
+
+    
     // Check if a free key already exists for today
     const { data: existingKey, error: checkError } = await supabase
       .from('mod_keys')
@@ -92,8 +107,11 @@ export async function POST() {
 
     // 2. Nếu chưa có, tạo mới
     const keyValue = generateKey();
+    const verificationToken = crypto.randomUUID(); // Generate secure token
     const expiresAt = getEndOfDayVN();
-    const destinationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/key/free/${encodeURIComponent(keyValue)}`;
+    
+    // New Destination URL: points to receive page with token, NOT key
+    const destinationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/key/receive?token=${verificationToken}`;
     const shortLink = await createYeulinkShortLink(destinationUrl);
 
     const { data: newKey, error: insertError } = await supabase
@@ -107,7 +125,8 @@ export async function POST() {
         is_active: true,
         usage_count: 0,
         short_link: shortLink,
-        destination_url: destinationUrl
+        destination_url: destinationUrl,
+        verification_token: verificationToken // Store token
       })
       .select()
       .single();
