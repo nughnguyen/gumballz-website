@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, Key, Check, Copy, AlertTriangle, ShieldCheck } from "lucide-react";
 
-export default function ReceiveKeyPage() {
+function ReceiveKeyContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const router = useRouter();
@@ -114,5 +114,23 @@ export default function ReceiveKeyPage() {
          </p>
       </div>
     </div>
+  );
+}
+
+export default function ReceiveKeyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+           <div className="bg-white rounded-[2rem] p-12 shadow-2xl border border-slate-200 text-center">
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-slate-700">Đang tải...</h2>
+              <p className="text-slate-400 text-sm mt-2">Vui lòng đợi trong giây lát</p>
+           </div>
+        </div>
+      </div>
+    }>
+      <ReceiveKeyContent />
+    </Suspense>
   );
 }
