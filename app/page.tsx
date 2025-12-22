@@ -29,13 +29,6 @@ export default function HubPage() {
       color: "bg-purple-500/10 border-purple-500/20"
     },
     {
-      title: "Mod Menu Config",
-      description: "Admin Panel quản lý offsets và cấu hình hack.",
-      icon: <Layout className="w-8 h-8 text-orange-500" />,
-      href: "/admin/mod-config",
-      color: "bg-orange-500/10 border-orange-500/20"
-    },
-    {
       title: "Downloads",
       description: "Tải xuống các phiên bản APK và Tools mới nhất.",
       icon: <Download className="w-8 h-8 text-green-500" />,

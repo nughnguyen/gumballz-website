@@ -5,6 +5,7 @@ import { Save, Lock, Layout, RefreshCw } from "lucide-react";
 
 export default function ModConfigAdmin() {
   const [secret, setSecret] = useState("");
+  const [adminName, setAdminName] = useState("");
   const [configName, setConfigName] = useState("LQM Default");
   const [configData, setConfigData] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,7 @@ export default function ModConfigAdmin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           secret,
+          admin_name: adminName,
           config_name: configName,
           config_data: configData
         })
@@ -114,6 +116,17 @@ export default function ModConfigAdmin() {
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
               </div>
             </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">Your Admin Name</label>
+                <input 
+                  type="text" 
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                  placeholder="e.g. GumballZ_Modder"
+                  className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 w-full focus:border-blue-500 outline-none" 
+                />
+             </div>
           </div>
 
           <div className="space-y-2">
