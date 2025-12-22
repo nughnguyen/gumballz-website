@@ -102,7 +102,7 @@ export default function KeysPage() {
         <div className="flex justify-center mb-16">
           <div className="bg-slate-200/50 p-1.5 rounded-2xl flex gap-2">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/store')}
               className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-slate-500 hover:text-slate-700 transition-all"
             >
               <Coins className="w-5 h-5" /> Nạp Coiz

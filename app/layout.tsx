@@ -11,7 +11,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "GumballZ Payment Gateway",
+  title: "GumballZ System",
   description: "Cổng nạp GumballZ - Nạp Coiz tự động, an toàn, nhanh chóng.",
   icons: {
     icon: '/logo.png',

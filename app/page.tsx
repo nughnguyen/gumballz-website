@@ -3,39 +3,15 @@
 import { motion } from "framer-motion";
 import { 
   ShieldCheck, 
-  ArrowRight, 
-  Layout,
-  ShoppingCart,
-  Download,
-  Key,
-  Globe
+  Globe,
+  Zap,
+  Bot,
+  Gamepad2,
+  Cpu
 } from "lucide-react";
 import Link from "next/link";
 
 export default function HubPage() {
-  const features = [
-    {
-      title: "Store & Payment",
-      description: "Nạp Coiz tự động, an toàn và nhanh chóng 24/7.",
-      icon: <ShoppingCart className="w-8 h-8 text-blue-500" />,
-      href: "/store",
-      color: "bg-blue-500/10 border-blue-500/20"
-    },
-    {
-      title: "Key System",
-      description: "Quản lý và lấy key kích hoạt cho các sản phẩm.",
-      icon: <Key className="w-8 h-8 text-purple-500" />,
-      href: "/keys",
-      color: "bg-purple-500/10 border-purple-500/20"
-    },
-    {
-      title: "Downloads",
-      description: "Tải xuống các phiên bản APK và Tools mới nhất.",
-      icon: <Download className="w-8 h-8 text-green-500" />,
-      href: "#", // Placeholder
-      color: "bg-green-500/10 border-green-500/20"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden">
@@ -44,7 +20,8 @@ export default function HubPage() {
       <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-blue-400/20 blur-[100px] rounded-full pointer-events-none" />
 
       <main className="relative z-10 container mx-auto px-6 py-24">
-        <div className="text-center max-w-3xl mx-auto mb-20">
+        {/* Header Section */}
+        <div className="text-center max-w-4xl mx-auto mb-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -67,45 +44,91 @@ export default function HubPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-slate-500 font-medium leading-relaxed"
+              className="text-xl text-slate-500 font-medium leading-relaxed mb-10"
             >
-              Trung tâm quản lý, thanh toán và phát triển công cụ cho hệ sinh thái GumballZ.
+              Hệ sinh thái toàn diện: Mod Menu, Discord Bot, và Tools hỗ trợ game thủ.
             </motion.p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {features.map((feature, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + (idx * 0.1) }}
-            >
-              <Link 
-                href={feature.href}
-                className={`group block p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden`}
-              >
-                <div className={`absolute top-0 right-0 p-32 rounded-full blur-3xl opacity-20 -mr-16 -mt-16 transition-colors ${feature.color.replace('border', 'bg').replace('/20', '')}`} />
-                
-                <div className="relative z-10">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors ${feature.color} border`}>
-                    {feature.icon}
-                  </div>
-                  
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-slate-500 font-medium pr-8">
-                    {feature.description}
-                  </p>
+        {/* Info / Ad Section - Replacing the old navigation cards */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Feature 1: Mod Menu */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-lg relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 p-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6">
+                <Gamepad2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">GumballZ Mod Menu</h3>
+              <p className="text-slate-500 mb-6">
+                Trải nghiệm game đỉnh cao với Menu Mod an toàn, cập nhật liên tục. Hỗ trợ Hack Map, Cam xa và nhiều tính năng độc quyền.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">Anti-Ban</span>
+                <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">Auto-Update</span>
+              </div>
+            </div>
+          </motion.div>
 
-                  <div className="mt-8 flex items-center text-sm font-bold text-slate-400 group-hover:text-blue-500 transition-colors uppercase tracking-wider">
-                    Truy cập <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          {/* Feature 2: Discord Bot */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-[2rem] p-8 border border-slate-200 shadow-lg relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 p-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+             <div className="relative z-10">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6">
+                <Bot className="w-6 h-6" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Discord Bot</h3>
+              <p className="text-slate-500 mb-6">
+                Bot giải trí, quản lý server và tích hợp hệ thống thanh toán tự động. Mini-games câu cá, nối từ và nhiều hơn nữa.
+              </p>
+               <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">24/7 Hosting</span>
+                <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">Economy</span>
+              </div>
+            </div>
+          </motion.div>
+
+           {/* Feature 3: Coiz System */}
+           <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="md:col-span-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] p-8 md:p-12 shadow-xl relative overflow-hidden text-white"
+          >
+             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-bold mb-4">
+                    <Zap className="w-4 h-4 text-yellow-300" />
+                    <span>Hệ thống thanh toán</span>
                   </div>
+                  <h3 className="text-3xl font-bold mb-4">Nạp Coiz - Không giới hạn</h3>
+                  <p className="text-blue-100 mb-8 max-w-xl mx-auto md:mx-0">
+                    Sử dụng Coiz để mua Key Mod, vật phẩm trong game Discord và nhiều đặc quyền khác. Tỉ lệ nạp hấp dẫn, xử lý tự động trong tích tắc.
+                  </p>
+                  <Link href="/store" className="inline-block bg-white text-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors">
+                    Nạp Ngay
+                  </Link>
                 </div>
-              </Link>
-            </motion.div>
-          ))}
+                
+                {/* Visual placeholder for Coiz/Payment */}
+                <div className="w-full md:w-auto flex justify-center">
+                   <div className="w-32 h-32 md:w-40 md:h-40 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center transform rotate-6">
+                      <span className="text-5xl font-black">C</span>
+                   </div>
+                </div>
+             </div>
+          </motion.div>
         </div>
 
         <motion.div 
@@ -116,7 +139,7 @@ export default function HubPage() {
         >
           &copy; 2024 GumballZ System. All rights reserved. <br/>
           <span className="flex items-center justify-center gap-2 mt-2 opacity-50">
-            <Globe className="w-3 h-3" /> Protected by GumballZ Security
+            <Globe className="w-3 h-3" /> Protected by GumballZ Security • Powered by Nguyen Quoc Hung
           </span>
         </motion.div>
       </main>
