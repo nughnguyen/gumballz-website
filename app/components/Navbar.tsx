@@ -1,104 +1,102 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { Menu, X, Home, Clock, Phone, ShieldCheck } from "lucide-react";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { 
+  ShoppingCart, 
+  Key, 
+  Home, 
+  ShieldCheck,
+  Menu,
+  X 
+} from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Navbar() {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const navLinks = [
-    { name: "Trang chủ", href: "/", icon: Home },
-    { name: "Tra cứu", href: "/history", icon: Clock },
-    { name: "Liên hệ", href: "/contact", icon: Phone },
+  const navItems = [
+    { name: "Trang Chủ", href: "/", icon: <Home className="w-5 h-5" /> },
+    { name: "Cửa Hàng", href: "/store", icon: <ShoppingCart className="w-5 h-5" /> },
+    { name: "Lấy Key", href: "/keys", icon: <Key className="w-5 h-5" /> },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-30 h-30 relative group-hover:scale-105 transition-transform duration-300 ease-out">
-              <Image 
-                src="/logo.png" 
-                alt="GumballZ Logo" 
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-slate-800 leading-none">
-                GumballZ
-              </span>
-              <span className="text-xs font-medium text-blue-600 tracking-wider">PAYMENT</span>
-            </div>
-          </Link>
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="container mx-auto px-4 lg:px-6">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 font-black text-xl text-slate-900">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <span>GumballZ<span className="text-blue-600">Hub</span></span>
+            </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <div className="flex gap-1">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                      isActive
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                  >
-                    <link.icon className={`w-4 h-4 ${isActive ? "text-blue-500" : "text-slate-400"}`} />
-                    {link.name}
-                  </Link>
-                );
-              })}
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    pathname === item.href
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  {item.icon}
+                  {item.name}
+                </Link>
+              ))}
             </div>
-            <div className="pl-6 border-l border-slate-200">
-               <button className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/10">
-                   <ShieldCheck className="w-4 h-4" />
-                   <span>An toàn</span>
-               </button>
-            </div>
-          </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button
+            {/* Mobile Menu Button */}
+            <button 
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+              className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
             >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isOpen ? <X /> : <Menu />}
             </button>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-slate-200 shadow-xl animate-in slide-in-from-top-2 duration-200">
-          <div className="px-4 py-6 space-y-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors text-slate-700 font-medium"
-              >
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                   <link.icon className="w-5 h-5" />
-                </div>
-                {link.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </nav>
+      {/* Mobile Nav Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-x-0 top-16 z-40 bg-white border-b border-slate-200 shadow-xl md:hidden p-4"
+          >
+            <div className="flex flex-col gap-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                    pathname === item.href
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  {item.icon}
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Spacer to prevent content from hiding behind fixed navbar */}
+      <div className="h-16" />
+    </>
   );
 }

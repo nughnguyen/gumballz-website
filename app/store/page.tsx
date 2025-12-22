@@ -78,12 +78,7 @@ export default function StorePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-       <button 
-        onClick={() => router.push('/')}
-        className="fixed top-4 left-4 z-50 p-3 bg-white/80 backdrop-blur rounded-full shadow-lg hover:bg-white transition-all border border-slate-200"
-      >
-        <HomeIcon className="w-5 h-5 text-slate-600" />
-      </button>
+
 
       {/* Guide Modal */}
       <AnimatePresence>
