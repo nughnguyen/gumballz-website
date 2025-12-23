@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         key_value: keyValue,
         key_type: type,
         duration_days: durationDays || 1,
-        price_vnd: 0, // Admin generated
+        // price_vnd: 0, // Removed to avoid schema error if column missing
         short_link: 'ADMIN_GENERATED',
         destination_url: 'ADMIN_GENERATED',
         expires_at: expiresAt,
