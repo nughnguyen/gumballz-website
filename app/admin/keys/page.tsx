@@ -6,6 +6,7 @@ import { useState } from 'react';
 export default function AdminKeysPage() {
   const [secret, setSecret] = useState('');
   const [duration, setDuration] = useState(1);
+  const [maxDevices, setMaxDevices] = useState(1);
   const [type, setType] = useState('PREMIUM');
   const [customKey, setCustomKey] = useState('');
   const [result, setResult] = useState<any>(null);
@@ -21,6 +22,7 @@ export default function AdminKeysPage() {
         body: JSON.stringify({
           adminSecret: secret,
           durationDays: duration,
+          maxDevices,
           type,
           customKey: customKey || undefined
         })
@@ -69,6 +71,17 @@ export default function AdminKeysPage() {
               value={duration}
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full bg-gray-700 rounded p-2 border border-gray-600 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1 text-gray-400">Max Devices</label>
+            <input 
+              type="number" 
+              value={maxDevices}
+              onChange={e => setMaxDevices(Number(e.target.value))}
+              className="w-full bg-gray-700 rounded p-2 border border-gray-600 outline-none"
+              min="1"
             />
           </div>
 

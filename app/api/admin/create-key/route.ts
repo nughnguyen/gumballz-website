@@ -18,7 +18,7 @@ function generateKey(prefix: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { durationDays, type = 'PREMIUM', customKey, adminSecret } = body;
+    const { durationDays, type = 'PREMIUM', customKey, adminSecret, maxDevices = 1 } = body;
 
     // Simple security check (replace with real auth in production)
     if (adminSecret !== process.env.API_SECRET_KEY && adminSecret !== 'gumballz_admin_2025') {
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         key_value: keyValue,
         key_type: type,
         duration_days: durationDays || 1,
+        max_devices: maxDevices || 1,
         // price_vnd: 0, // Removed to avoid schema error if column missing
         short_link: 'ADMIN_GENERATED',
         destination_url: 'ADMIN_GENERATED',
