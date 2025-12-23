@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const { durationDays, type = 'PREMIUM', customKey, adminSecret } = body;
 
     // Simple security check (replace with real auth in production)
-    if (adminSecret !== process.env.ADMIN_SECRET && adminSecret !== 'gumballz_admin_2025') {
+    if (adminSecret !== process.env.API_SECRET_KEY && adminSecret !== 'gumballz_admin_2025') {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
