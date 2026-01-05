@@ -159,29 +159,14 @@ function PaymentCard() {
 
   return (
     <div className="min-h-screen bg-[#FFF9F5] pt-28 pb-20 px-6">
-      <div className="container mx-auto max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-12 space-y-4">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-100 border-[3px] border-slate-900 rounded-full shadow-[3px_3px_0px_0px_#1E293B] font-bold text-sm">
-            <CreditCard className="w-4 h-4 text-cyan-600" />
-            <span className="text-slate-900">Payment Gateway</span>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">
-            Thanh Toán <span className="text-cyan-500">QR Code</span>
-          </h1>
-          <p className="text-slate-600 text-lg font-medium">
-            Quét mã để hoàn tất giao dịch
-          </p>
-        </div>
-
+      <div className="container mx-auto max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
           {/* Content Grid - 2 Columns: QR + Payment Info */}
-          <div className="grid lg:grid-cols-[350px_1fr] gap-8 items-start">
+          <div className="grid lg:grid-cols-2 gap-8 items-start max-w-[732px] mx-auto">
             {/* Left Column: QR + Download Button */}
             <div className="space-y-6">
               {/* QR Code Card */}
@@ -272,7 +257,7 @@ function PaymentCard() {
 
             {/* Right Column: Payment Details */}
             {status !== "success" && (
-              <div className={`clay-card p-8 space-y-6 ${isExpired ? "opacity-30" : ""}`}>
+              <div className={`clay-card p-5 space-y-6 ${isExpired ? "opacity-30" : ""}`}>
                 <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-cyan-500" />
                   Thông Tin Chuyển Khoản
@@ -318,22 +303,20 @@ function PaymentCard() {
 
           {/* Amount Card - Full Width Horizontal Rectangle */}
           {status !== "success" && (
-            <div className="clay-card p-6 bg-gradient-to-br from-cyan-500 to-cyan-600 relative overflow-hidden">
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <div>
-                    <div className="text-slate-900 text-xs font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
-                    <div className="text-4xl md:text-5xl font-black text-slate-900">{formattedAmount}</div>
-                  </div>
-                  
-                  {timeLeft !== null && (
-                    <div className="flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-2 rounded-full border-2 border-slate-900/30">
-                      <Clock className={`w-4 h-4 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
-                      <span className="text-xs font-bold text-slate-900">Hết hạn sau:</span>
-                      <span className="font-mono font-black text-slate-900 text-lg">{formatTime(timeLeft)}</span>
-                    </div>
-                  )}
+            <div className="clay-card p-6 bg-gradient-to-br from-cyan-500 to-cyan-600 relative overflow-hidden max-w-[732px] mx-auto">
+              <div className="relative z-10 flex items-center justify-center gap-8">
+                <div className="text-center">
+                  <div className="text-slate-900 text-xs font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
+                  <div className="text-4xl md:text-5xl font-black text-slate-900">{formattedAmount}</div>
                 </div>
+                
+                {timeLeft !== null && (
+                  <div className="flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-3 rounded-full border-2 border-slate-900/30">
+                    <Clock className={`w-4 h-4 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
+                    <span className="text-xs font-bold text-slate-900">Hết hạn sau:</span>
+                    <span className="font-mono font-black text-slate-900 text-lg">{formatTime(timeLeft)}</span>
+                  </div>
+                )}
               </div>
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />

@@ -177,31 +177,8 @@ export default function StorePage() {
 
       {/* Main Content */}
       <div className="pt-28 pb-20 px-6">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16 space-y-4">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-100 border-[3px] border-slate-900 rounded-full shadow-[3px_3px_0px_0px_#1E293B] font-bold text-sm"
-            >
-              <ShieldCheck className="w-4 h-4 text-cyan-600" />
-              <span className="text-slate-900">GumballZ System v3.1</span>
-            </motion.div>
-            
-            <motion.h1 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-4xl md:text-6xl font-black tracking-tight text-slate-900"
-            >
-              Nạp Coiz <span className="text-cyan-500">Tự Động</span>
-            </motion.h1>
-            
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto font-medium">
-              Hệ thống nạp tiền uy tín, bảo mật và hoàn toàn tự động cho cộng đồng GumballZ.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-12 gap-10">
+        <div className="container mx-auto max-w-6xl px-6 pt-28 pb-20">
+        <div className="grid lg:grid-cols-12 gap-10">
             <div className="lg:col-span-8">
               <div className="clay-card p-8 md:p-10">
                 <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3">

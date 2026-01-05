@@ -64,8 +64,8 @@ export function Footer() {
 
         <div className="border-t-[2px] border-slate-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm font-medium">
-                © 2025 GumballZ Hub. All rights reserved.\n
-                Powered by <span className="text-cyan-500">NGUYEN QUOC HUNG</span>.
+                © 2025 GumballZ Hub. All rights reserved.<br />
+                <div className="text-slate-500 text-sm font-medium text-center">Powered by <span className="text-cyan-500">NGUYEN QUOC HUNG</span>.</div>
             </p>
             <div className="text-slate-500 text-sm font-medium flex gap-6">
                 <Link href="/privacy" className="hover:text-cyan-500 transition-colors">Bảo mật</Link>

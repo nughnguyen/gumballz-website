@@ -99,25 +99,7 @@ export default function KeysPage() {
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-6 pt-28 pb-20 max-w-6xl">
 
-        {/* Header */}
-        <div className="mb-12 text-center space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-100 border-[3px] border-slate-900 rounded-full shadow-[3px_3px_0px_0px_#1E293B] font-bold text-sm"
-          >
-            <Key className="w-4 h-4 text-purple-600" />
-            <span className="text-slate-900">Key System v2.0</span>
-          </motion.div>
-
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-4 uppercase">
-            Hệ thống <span className="text-cyan-500">Key Mod</span>
-          </h1>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto font-medium">
-            Lấy key miễn phí hoặc mua key VIP để mở khóa toàn bộ tính năng mod menu.
-          </p>
-        </div>
-
+        {/* Key Grid */}
         <div className="grid lg:grid-cols-2 gap-10">
           {/* FREE KEY CARD */}
           <motion.div
