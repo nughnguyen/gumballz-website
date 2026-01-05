@@ -32,7 +32,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 font-black text-xl text-slate-900">
-              <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center border-2 border-slate-900">
+              <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center border-2 border-slate-900">
                 <img src="/logo.png" alt="GumballZ Hub Logo" className="w-full h-full object-cover" />
               </div>
               <span className="hidden sm:inline">

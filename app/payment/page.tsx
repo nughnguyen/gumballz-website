@@ -180,112 +180,115 @@ function PaymentCard() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          {/* Amount Card */}
-          <div className="clay-card p-6 text-center bg-gradient-to-br from-cyan-500 to-cyan-600 relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="text-slate-900 text-[10px] font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
-              <div className="text-3xl md:text-4xl font-black text-slate-900 mb-3">{formattedAmount}</div>
-              
-              {status !== "success" && timeLeft !== null && (
-                <div className="inline-flex items-center gap-2 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-slate-900/30">
-                  <Clock className={`w-3.5 h-3.5 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
-                  <span className="text-[10px] font-bold text-slate-900">Hết hạn sau:</span>
-                  <span className="font-mono font-black text-slate-900 text-sm">{formatTime(timeLeft)}</span>
-                </div>
-              )}
-            </div>
-            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-          </div>
-
-          {/* Content Grid */}
-          <div className="max-w-3xl mx-auto space-y-6">
-            {/* QR Code Card */}
-            <div className="clay-card p-8">
-              {status === "success" ? (
-                <motion.div 
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="space-y-6 text-center"
-                >
-                  <div className="w-20 h-20 bg-green-100 border-[3px] border-slate-900 rounded-full flex items-center justify-center mx-auto shadow-[3px_3px_0px_0px_#1E293B]">
-                    <Check className="w-10 h-10 text-green-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-2">Thanh toán thành công!</h2>
-                    <p className="text-slate-600 font-medium">Hệ thống đã xác nhận giao dịch của bạn</p>
-                  </div>
-
-                  {generatedKey && (
-                    <div className="clay-card p-6 bg-gradient-to-br from-purple-50 to-white space-y-4">
-                      <div className="flex items-center gap-2 text-purple-600 font-bold">
-                        <Key className="w-5 h-5" /> VIP Key của bạn
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-grow bg-slate-100 border-[3px] border-slate-900 p-4 rounded-xl font-mono text-lg font-black text-slate-900 shadow-[2px_2px_0px_0px_#1E293B]">
-                          {generatedKey}
-                        </div>
-                        <button 
-                          onClick={() => handleCopy(generatedKey, "gen-key")}
-                          className="p-4 bg-purple-500 border-[3px] border-slate-900 rounded-xl text-white shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all"
-                        >
-                          {copied === "gen-key" ? <Check /> : <Copy />}
-                        </button>
-                      </div>
-                      <p className="text-xs text-slate-500 font-bold">Copy và dán vào Mod Menu để kích hoạt</p>
-                    </div>
-                  )}
-
-                  <Link href="/" className="clay-button w-full flex items-center justify-center gap-2">
-                    Về trang chủ <ExternalLink className="w-5 h-5" />
-                  </Link>
-                </motion.div>
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-cyan-500" />
-                    Mã QR Thanh Toán
-                  </h3>
+          {/* Content Grid - 2 Columns */}
+          <div className="grid lg:grid-cols-[400px_1fr] gap-6 items-start">
+            {/* Left Column: QR + Download + Amount */}
+            <div className="space-y-6">
+              {/* QR Code Card */}
+              <div className="clay-card p-8">
+                {status === "success" ? (
                   <motion.div 
-                    className="relative"
-                    initial={{ scale: 0.9, opacity: 0 }}
+                    initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
+                    className="space-y-6 text-center"
                   >
-                    <div 
-                      className={`p-4 bg-white border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer ${isExpired ? "opacity-20 grayscale" : ""}`}
-                    >
-                      <img src={qrUrl} alt="QR" className="w-full h-auto object-contain" />
+                    <div className="w-20 h-20 bg-green-100 border-[3px] border-slate-900 rounded-full flex items-center justify-center mx-auto shadow-[3px_3px_0px_0px_#1E293B]">
+                      <Check className="w-10 h-10 text-green-600" />
                     </div>
-                    {isExpired && (
-                      <motion.div 
-                        className="absolute inset-0 flex items-center justify-center"
-                        initial={{ scale: 0, rotate: 0 }}
-                        animate={{ scale: 1, rotate: -12 }}
-                        transition={{ type: "spring", stiffness: 200 }}
-                      >
-                        <span className="bg-red-500 text-white font-black px-6 py-3 rounded-xl border-[3px] border-slate-900 shadow-[4px_4px_0px_0px_#1E293B] tracking-widest">HẾT HẠN</span>
-                      </motion.div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-900 mb-2">Thanh toán thành công!</h2>
+                      <p className="text-slate-600 font-medium">Hệ thống đã xác nhận giao dịch của bạn</p>
+                    </div>
+
+                    {generatedKey && (
+                      <div className="clay-card p-6 bg-gradient-to-br from-purple-50 to-white space-y-4">
+                        <div className="flex items-center gap-2 text-purple-600 font-bold">
+                          <Key className="w-5 h-5" /> VIP Key của bạn
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-grow bg-slate-100 border-[3px] border-slate-900 p-4 rounded-xl font-mono text-lg font-black text-slate-900 shadow-[2px_2px_0px_0px_#1E293B]">
+                            {generatedKey}
+                          </div>
+                          <button 
+                            onClick={() => handleCopy(generatedKey, "gen-key")}
+                            className="p-4 bg-purple-500 border-[3px] border-slate-900 rounded-xl text-white shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all"
+                          >
+                            {copied === "gen-key" ? <Check /> : <Copy />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-500 font-bold">Copy và dán vào Mod Menu để kích hoạt</p>
+                      </div>
                     )}
+
+                    <Link href="/" className="clay-button w-full flex items-center justify-center gap-2">
+                      Về trang chủ <ExternalLink className="w-5 h-5" />
+                    </Link>
                   </motion.div>
-                  
-                  {/* Download QR Button */}
-                  {!isExpired && status !== "success" && (
-                    <motion.button
-                      onClick={handleDownloadQR}
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full py-3 bg-slate-100 border-[3px] border-slate-900 rounded-xl font-bold text-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all flex items-center justify-center gap-2"
+                ) : (
+                  <div className="space-y-4">
+                    <h3 className="font-black text-slate-900 text-lg text-center flex items-center justify-center gap-2">
+                      <CreditCard className="w-5 h-5 text-cyan-500" />
+                      Mã QR Thanh Toán
+                    </h3>
+                    <motion.div 
+                      className="relative"
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <Download className="w-4 h-4" />
-                      Tải mã QR
-                    </motion.button>
+                      <div 
+                        className={`p-4 bg-white border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer ${isExpired ? "opacity-20 grayscale" : ""}`}
+                      >
+                        <img src={qrUrl} alt="QR" className="w-full h-auto object-contain" />
+                      </div>
+                      {isExpired && (
+                        <motion.div 
+                          className="absolute inset-0 flex items-center justify-center"
+                          initial={{ scale: 0, rotate: 0 }}
+                          animate={{ scale: 1, rotate: -12 }}
+                          transition={{ type: "spring", stiffness: 200 }}
+                        >
+                          <span className="bg-red-500 text-white font-black px-6 py-3 rounded-xl border-[3px] border-slate-900 shadow-[4px_4px_0px_0px_#1E293B] tracking-widest">HẾT HẠN</span>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                    
+                    {/* Download QR Button */}
+                    {!isExpired && (
+                      <motion.button
+                        onClick={handleDownloadQR}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-3 bg-slate-100 border-[3px] border-slate-900 rounded-xl font-bold text-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Tải mã QR
+                      </motion.button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Amount Card */}
+              <div className="clay-card p-6 text-center bg-gradient-to-br from-cyan-500 to-cyan-600 relative overflow-hidden">
+                <div className="relative z-10">
+                  <div className="text-slate-900 text-[10px] font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
+                  <div className="text-3xl md:text-4xl font-black text-slate-900 mb-3">{formattedAmount}</div>
+                  
+                  {status !== "success" && timeLeft !== null && (
+                    <div className="inline-flex items-center gap-2 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-slate-900/30">
+                      <Clock className={`w-3.5 h-3.5 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
+                      <span className="text-[10px] font-bold text-slate-900">Hết hạn sau:</span>
+                      <span className="font-mono font-black text-slate-900 text-sm">{formatTime(timeLeft)}</span>
+                    </div>
                   )}
                 </div>
-              )}
+                <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+              </div>
             </div>
 
-            {/* Payment Details Card */}
+            {/* Right Column: Payment Details */}
             {status !== "success" && (
               <div className={`clay-card p-8 space-y-6 ${isExpired ? "opacity-30" : ""}`}>
                 <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
