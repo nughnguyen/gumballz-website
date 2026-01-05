@@ -12,7 +12,8 @@ import {
   Key,
   ExternalLink,
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
 import Link from 'next/link';
 
@@ -98,6 +99,23 @@ function PaymentCard() {
     setTimeout(() => setCopied(""), 2000);
   };
 
+  const handleDownloadQR = async () => {
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `QR-${content}-${amount}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
   useEffect(() => {
     if (!expiryParam || status === "success") return;
     let expiryTime = parseInt(expiryParam);
@@ -165,14 +183,14 @@ function PaymentCard() {
           {/* Amount Card */}
           <div className="clay-card p-6 text-center bg-gradient-to-br from-cyan-500 to-cyan-600 relative overflow-hidden">
             <div className="relative z-10">
-              <div className="text-white/70 text-[10px] font-black uppercase tracking-wider mb-1">Số tiền</div>
-              <div className="text-3xl md:text-4xl font-black text-white mb-3">{formattedAmount}</div>
+              <div className="text-slate-900 text-[10px] font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
+              <div className="text-3xl md:text-4xl font-black text-slate-900 mb-3">{formattedAmount}</div>
               
               {status !== "success" && timeLeft !== null && (
-                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-white/30">
-                  <Clock className={`w-3.5 h-3.5 ${timeLeft < 60 ? "text-yellow-300 animate-pulse" : "text-white"}`} />
-                  <span className="text-[10px] font-bold text-white/90">Hết hạn:</span>
-                  <span className="font-mono font-black text-white text-sm">{formatTime(timeLeft)}</span>
+                <div className="inline-flex items-center gap-2 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full border-2 border-slate-900/30">
+                  <Clock className={`w-3.5 h-3.5 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
+                  <span className="text-[10px] font-bold text-slate-900">Hết hạn sau:</span>
+                  <span className="font-mono font-black text-slate-900 text-sm">{formatTime(timeLeft)}</span>
                 </div>
               )}
             </div>
@@ -181,7 +199,7 @@ function PaymentCard() {
           </div>
 
           {/* Content Grid */}
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="max-w-3xl mx-auto space-y-6">
             {/* QR Code Card */}
             <div className="clay-card p-8">
               {status === "success" ? (
@@ -234,23 +252,11 @@ function PaymentCard() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <motion.div 
-                      className={`p-4 bg-white border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] ${isExpired ? "opacity-20 grayscale" : ""}`}
-                      animate={!isExpired && status !== "success" ? {
-                        boxShadow: [
-                          "4px 4px 0px 0px #1E293B",
-                          "6px 6px 0px 0px #06B6D4",
-                          "4px 4px 0px 0px #1E293B"
-                        ]
-                      } : {}}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatType: "reverse"
-                      }}
+                    <div 
+                      className={`p-4 bg-white border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer ${isExpired ? "opacity-20 grayscale" : ""}`}
                     >
                       <img src={qrUrl} alt="QR" className="w-full h-auto object-contain" />
-                    </motion.div>
+                    </div>
                     {isExpired && (
                       <motion.div 
                         className="absolute inset-0 flex items-center justify-center"
@@ -262,6 +268,19 @@ function PaymentCard() {
                       </motion.div>
                     )}
                   </motion.div>
+                  
+                  {/* Download QR Button */}
+                  {!isExpired && status !== "success" && (
+                    <motion.button
+                      onClick={handleDownloadQR}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full py-3 bg-slate-100 border-[3px] border-slate-900 rounded-xl font-bold text-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Tải mã QR
+                    </motion.button>
+                  )}
                 </div>
               )}
             </div>

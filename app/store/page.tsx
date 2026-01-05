@@ -246,19 +246,17 @@ export default function StorePage() {
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                       {predefinedAmounts.map((item) => (
-                        <motion.button 
+                        <button 
                           key={item.value} 
                           onClick={() => setAmount(item.value)}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95, y: 0 }}
                           className={`py-2 rounded-xl border-[3px] text-xs font-bold transition-all ${
                             amount === item.value 
                             ? "bg-cyan-500 border-slate-900 text-white shadow-[3px_3px_0px_0px_#1E293B]" 
-                            : "bg-white border-slate-900 text-slate-600 hover:bg-cyan-50 shadow-[2px_2px_0px_0px_#1E293B]"
+                            : "bg-white border-slate-900 text-slate-600 hover:bg-cyan-50 shadow-[2px_2px_0px_0px_#1E293B] hover:shadow-[1px_1px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px"
                           }`}
                         >
                           {item.label}
-                        </motion.button>
+                        </button>
                       ))}
                     </div>
                   </div>
