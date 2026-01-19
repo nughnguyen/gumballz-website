@@ -130,7 +130,7 @@ export default function DocsPage() {
         SaveKey = true, -- Tự động lưu key
         GrabKeyFromSite = false, -- Lấy key từ URL
         Key = {"KEY-123", "KEY-456"}, -- Danh sách key hợp lệ
-        URL = "https://discord.gg/example" -- Link copy khi bấm nút
+        URL = "https://gumballzhub.vercel.app/keys" -- Link copy khi bấm nút
     }
 })`} />
                 <div className="grid md:grid-cols-2 gap-4">
@@ -172,6 +172,29 @@ local MainSection = Home:AddSection({
               <h2 className="text-3xl font-black text-slate-900 mb-8 pb-4 border-b-2 border-slate-200">UI Elements</h2>
               
               <div className="space-y-12">
+                {/* Divider */}
+                <div>
+                   <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <Type className="w-5 h-5 text-purple-500" />
+                    Divider
+                   </h3>
+                   <p className="text-slate-600 mb-4 text-sm font-medium">Đường kẻ phân cách các nhóm chức năng.</p>
+                   <CodeBlock code={`Section:AddDivider("SETTINGS")`} />
+                </div>
+
+                {/* Paragraph */}
+                <div>
+                   <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <Type className="w-5 h-5 text-purple-500" />
+                    Paragraph
+                   </h3>
+                   <p className="text-slate-600 mb-4 text-sm font-medium">Hiển thị đoạn văn bản thông báo hoặc hướng dẫn.</p>
+                   <CodeBlock code={`Section:AddParagraph({
+    Title = "Thông Báo",
+    Content = "Phiên bản script hiện tại đang là beta."
+})`} />
+                </div>
+
                 {/* Toggle */}
                 <div>
                    <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -200,6 +223,8 @@ local MainSection = Home:AddSection({
     Default = 16,
     Min = 16,
     Max = 100,
+    Round = 1, -- Số chữ số thập phân
+    Type = " spd", -- Đơn vị hiển thị sau số
     Callback = function(Value)
         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
     end
@@ -236,6 +261,77 @@ local MainSection = Home:AddSection({
     Callback = function(Value)
         print("Selected:", Value)
     end
+})`} />
+                </div>
+
+                {/* ColorPicker */}
+                <div>
+                   <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <MousePointer2 className="w-5 h-5 text-purple-500" />
+                    ColorPicker
+                   </h3>
+                   <p className="text-slate-600 mb-4 text-sm font-medium">Bộ chọn màu sắc.</p>
+                   <CodeBlock code={`Section:AddColorPicker({
+    Name = "Accent Color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Callback = function(Color)
+        print("New Color:", Color)
+    end
+})`} />
+                </div>
+
+                {/* Keybind */}
+                <div>
+                   <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <MousePointer2 className="w-5 h-5 text-purple-500" />
+                    Keybind
+                   </h3>
+                   <p className="text-slate-600 mb-4 text-sm font-medium">Phím tắt kích hoạt chức năng.</p>
+                   <CodeBlock code={`Section:AddKeybind({
+    Name = "Toggle Menu",
+    Default = Enum.KeyCode.RightControl,
+    Callback = function()
+        print("Key Pressed!")
+    end
+})`} />
+                </div>
+
+                {/* PlayerView */}
+                <div>
+                   <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <MousePointer2 className="w-5 h-5 text-purple-500" />
+                    PlayerView
+                   </h3>
+                   <p className="text-slate-600 mb-4 text-sm font-medium">Hiển thị nhân vật của người chơi trong UI.</p>
+                   <CodeBlock code={`Section:AddPlayerView({
+    Height = 200 -- Chiều cao của khung nhìn
+})`} />
+                </div>
+
+                {/* Nested Elements */}
+                <div>
+                   <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <Layout className="w-5 h-5 text-purple-500" />
+                    Nested Elements (Option)
+                   </h3>
+                   <p className="text-slate-600 mb-4 text-sm font-medium">Lồng ghép các element vào trong một element khác (thường là Toggle).</p>
+                   <CodeBlock code={`-- Tạo Toggle có Option = true
+local Toggle = Section:AddToggle({
+    Name = "ESP Master",
+    Default = false,
+    Option = true -- Cho phép lồng ghép
+})
+
+-- Thêm ColorPicker vào bên trong Toggle
+Toggle.Option:AddColorPicker({
+    Name = "ESP Color",
+    Default = Color3.fromRGB(255, 0, 0)
+})
+
+-- Thêm Keybind vào bên trong Toggle
+Toggle.Option:AddKeybind({
+    Name = "Quick Toggle",
+    Default = Enum.KeyCode.E
 })`} />
                 </div>
 
