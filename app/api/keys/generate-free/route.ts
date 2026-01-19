@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { generateRobloxKey, getEndOfDayVN } from "@/app/lib/key-generator";
 
 export const dynamic = 'force-dynamic';
 
@@ -12,65 +13,50 @@ const supabase = createClient(
 const YEULINK_TOKEN = "16ad669a-9404-48d7-aa63-8522b4014e11";
 const YEULINK_API_URL = "https://yeulink.com/st";
 
-// Helper function to generate key with double encoding
-// Result: GUMFREE-{first 10 chars}
-function generateKey(): string {
-  // Use timestamp and random string to ensure uniqueness
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
-  
-  // Combine them to get a unique identifier
-  const uniqueId = `${timestamp}${random}`;
-  
-  // Return the formatted key
-  return `GUMFREE-${uniqueId}`;
-}
-
-// Get today's date string in Vietnam timezone (YYYY-MM-DD)
-function getTodayDateString(): string {
-  const now = new Date();
-  // Convert to Vietnam timezone (UTC+7)
-  const vnTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-  return vnTime.toISOString().split('T')[0];
-}
-
-// Get end of day in Vietnam timezone
-function getEndOfDayVN(): Date {
-  const now = new Date();
-  const vnTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-  
-  // Set to 23:59:59.999 VN time
-  vnTime.setHours(23, 59, 59, 999);
-  
-  return vnTime;
-}
-
-// Create yeulink short link
-async function createYeulinkShortLink(destinationUrl: string): Promise<string> {
-  const yeulinkUrl = `${YEULINK_API_URL}?token=${YEULINK_TOKEN}&url=${encodeURIComponent(destinationUrl)}`;
-  
+export async function POST(req: NextRequest) {
   try {
-    const response = await fetch(yeulinkUrl, {
-      method: 'GET',
-      redirect: 'manual' // Don't follow redirects to capture the 302 Location
-    });
+    const body = await req.json().catch(() => ({}));
+    const type = body.type || 'mod'; // 'mod' or 'roblox'
     
-    const location = response.headers.get('location') || response.headers.get('Location');
-    
-    if (location) {
-        return location;
-    } else {
-        console.error('Yeulink API did not return a Location header');
-        return yeulinkUrl;
+    // Logic for Roblox Script Key
+    if (type === 'roblox') {
+      const keyValue = generateRobloxKey();
+      const expiresAt = getEndOfDayVN();
+      
+      // Destination URL for Roblox key (could be a simple success page or the key display page)
+      // Usually users want to see the key directly after passing link.
+      const destinationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/keys/claim?key=${keyValue}&type=roblox`;
+      
+      // Generate short link
+      const shortLink = await createYeulinkShortLink(destinationUrl);
+
+      const { data, error } = await supabase
+        .from('roblox_keys')
+        .insert({
+          key_value: keyValue,
+          key_type: 'free',
+          category: 'roblox',
+          expires_at: expiresAt.toISOString(),
+          is_used: false,
+          metadata: { provider: 'yeulink', short_link: shortLink }
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Roblox key insert error:', error);
+        return NextResponse.json({ success: false, error: "Lỗi tạo key Roblox" }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        shortLink: shortLink,
+        expiresAt: expiresAt.toISOString(),
+        message: "Đã tạo key Roblox mới thành công"
+      });
     }
-  } catch (error) {
-    console.error('Error creating yeulink:', error);
-    return yeulinkUrl;
-  }
-}
 
-export async function POST() {
-  try {
+    // Logic for Mod Menu Key (Existing)
     const today = getTodayDateString();
     
     // Check if a free key already exists for today
@@ -91,9 +77,14 @@ export async function POST() {
     }
 
     // 2. Nếu chưa có, tạo mới
-    const keyValue = generateKey();
+    const keyValueGenerator = () => {
+        const timestamp = Date.now().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+        return `GUMFREE-${timestamp}${random}`;
+    }
+    const keyValue = keyValueGenerator();
     const expiresAt = getEndOfDayVN();
-    const destinationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/key/free/${encodeURIComponent(keyValue)}`;
+    const destinationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/keys/claim?key=${keyValue}&type=mod`; // Standardized claim page
     const shortLink = await createYeulinkShortLink(destinationUrl);
 
     const { data: newKey, error: insertError } = await supabase
@@ -128,4 +119,37 @@ export async function POST() {
     console.error('Fatal error:', error);
     return NextResponse.json({ success: false, error: "Lỗi hệ thống nghiêm trọng" }, { status: 500 });
   }
+}
+
+// Helper: Create yeulink short link
+async function createYeulinkShortLink(destinationUrl: string): Promise<string> {
+  const yeulinkUrl = `${YEULINK_API_URL}?token=${YEULINK_TOKEN}&url=${encodeURIComponent(destinationUrl)}`;
+  
+  try {
+    const response = await fetch(yeulinkUrl, {
+      method: 'GET',
+      redirect: 'manual' 
+    });
+    
+    const location = response.headers.get('location') || response.headers.get('Location');
+    
+    if (location) {
+        return location;
+    } else {
+        console.error('Yeulink API did not return a Location header');
+        // Fallback or return original implementation behavior
+        // Since original behavior returned yeulinkUrl on fail, we keep it consistent or assume error
+        return yeulinkUrl; 
+    }
+  } catch (error) {
+    console.error('Error creating yeulink:', error);
+    return yeulinkUrl;
+  }
+}
+
+// Get today's date string in Vietnam timezone (YYYY-MM-DD)
+function getTodayDateString(): string {
+  const now = new Date();
+  const vnTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+  return vnTime.toISOString().split('T')[0];
 }

@@ -117,54 +117,8 @@ export default function HubPage() {
                 </motion.div>
               </div>
 
-              {/* Right: Floating Dashboard Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="relative"
-              >
-                <div className="clay-card p-8 relative">
-                  {/* Floating Icons */}
-                  <div className="absolute -top-6 -right-6 w-16 h-16 bg-pink-300 border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] flex items-center justify-center float-animation">
-                    <Target className="w-8 h-8 text-slate-900" />
-                  </div>
-                  <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-yellow-300 border-[3px] border-slate-900 rounded-full shadow-[3px_3px_0px_0px_#1E293B] flex items-center justify-center pulse-animation">
-                    <Star className="w-6 h-6 text-slate-900 fill-slate-900" />
-                  </div>
-                  <div className="absolute top-1/2 -right-8 w-14 h-14 bg-purple-300 border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] flex items-center justify-center float-animation" style={{ animationDelay: '1s' }}>
-                    <BookOpen className="w-7 h-7 text-slate-900" />
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-cyan-500 border-[3px] border-slate-900 rounded-full flex items-center justify-center">
-                      <Gamepad2 className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900">Hack Map Pro</h3>
-                      <p className="text-sm text-slate-600">12 tính năng • 4h 30m sử dụng</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-bold text-slate-900">Tiến trình</span>
-                      <span className="text-sm font-bold text-cyan-500">65%</span>
-                    </div>
-                    <div className="clay-progress">
-                      <div className="clay-progress-fill" style={{ width: '65%' }} />
-                    </div>
-                  </div>
-
-                  <Link
-                    href="/store"
-                    className="w-full py-3 bg-cyan-500 text-white font-bold rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_0px_#1E293B] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#1E293B] transition-all text-center block"
-                  >
-                    Tiếp Tục Chơi
-                  </Link>
-                </div>
-              </motion.div>
+              {/* Right: Floating Dashboard Card - REMOVED per request */}
+              
             </div>
           </div>
         </section>
@@ -182,12 +136,12 @@ export default function HubPage() {
                 Tính Năng <span className="text-cyan-500">Nổi Bật</span>
               </h2>
               <p className="text-lg text-slate-600 font-medium">
-                Khám phá các tính năng Discord Bot và hệ thống tự động hóa
+                Khám phá hệ sinh thái dịch vụ đa dạng và mạnh mẽ của GumballZ
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Feature Card 1 */}
+              {/* Feature Card 1: Minigames Hub */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className="clay-card p-6 space-y-4"
@@ -199,7 +153,7 @@ export default function HubPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Minigames Hub</h3>
-                      <p className="text-sm text-slate-600">10+ trò chơi đa dạng</p>
+                      <p className="text-sm text-slate-600">Thế giới giải trí</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 px-3 py-1 bg-green-200 border-2 border-slate-900 rounded-full">
@@ -208,17 +162,18 @@ export default function HubPage() {
                   </div>
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
-                  Câu cá, nối từ, bầu cua và nhiều minigame thú vị khác. Chơi cùng bạn bè, nhận phần thưởng.
+                  Trải nghiệm kho game đa dạng tại GumballZ Games! Tranh tài cùng bạn bè, leo bảng xếp hạng và rinh về ngàn phần quà giá trị mỗi ngày.
                 </p>
                 <Link
-                  href="/keys"
+                  href="https://gumballzgames.vercel.app"
+                  target="_blank"
                   className="w-full py-2.5 bg-cyan-500 text-white font-bold rounded-xl border-[3px] border-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px hover:shadow-[2px_2px_0px_0px_#1E293B] transition-all text-center block text-sm"
                 >
                   Chơi Ngay
                 </Link>
               </motion.div>
 
-              {/* Feature Card 2 */}
+              {/* Feature Card 2: Coiz System */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className="clay-card p-6 space-y-4"
@@ -230,7 +185,7 @@ export default function HubPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Hệ Thống Coiz</h3>
-                      <p className="text-sm text-slate-600">Tiền ảo & phần thưởng</p>
+                      <p className="text-sm text-slate-600">Tiền tệ quyền năng</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 px-3 py-1 bg-yellow-200 border-2 border-slate-900 rounded-full">
@@ -239,7 +194,7 @@ export default function HubPage() {
                   </div>
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
-                  Kiếm tiền ảo Coiz khi chơi game, đổi key VIP, và mua dịch vụ premium.
+                  Nạp Coiz dễ dàng, tích lũy không giới hạn. Sử dụng Coiz để đổi Key VIP, mua vật phẩm giới hạn và tận hưởng đặc quyền thượng đỉnh.
                 </p>
                 <Link
                   href="/store"
@@ -249,7 +204,7 @@ export default function HubPage() {
                 </Link>
               </motion.div>
 
-              {/* Feature Card 3 */}
+              {/* Feature Card 3: Auto Payment */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className="clay-card p-6 space-y-4"
@@ -261,7 +216,7 @@ export default function HubPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Auto Payment</h3>
-                      <p className="text-sm text-slate-600">Thanh toán tự động QR</p>
+                      <p className="text-sm text-slate-600">Xử lý siêu tốc</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 px-3 py-1 bg-cyan-200 border-2 border-slate-900 rounded-full">
@@ -270,7 +225,7 @@ export default function HubPage() {
                   </div>
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
-                  Quét QR, chuyển khoản và nhận key tự động trong vài giây. An toàn, tiện lợi.
+                  Hệ thống thanh toán tự động 24/7 qua QR Code. An toàn tuyệt đối, giao dịch trong vài giây và nhận ngay Coiz/Key vào tài khoản.
                 </p>
                 <Link
                   href="/history"
@@ -280,8 +235,7 @@ export default function HubPage() {
                 </Link>
               </motion.div>
 
-              {/* Additional Feature Cards */}
-              {/* Feature Card 4 */}
+              {/* Feature Card 4: Community */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className="clay-card p-6 space-y-4"
@@ -293,7 +247,7 @@ export default function HubPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Cộng Đồng</h3>
-                      <p className="text-sm text-slate-600">Discord Server hoạt động</p>
+                      <p className="text-sm text-slate-600">Discord lớn mạnh</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 px-3 py-1 bg-purple-200 border-2 border-slate-900 rounded-full">
@@ -302,7 +256,7 @@ export default function HubPage() {
                   </div>
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
-                  Tham gia cộng đồng sôi động, kết bạn, chơi game và nhận hỗ trợ từ admin 24/7.
+                  Gia nhập ngôi nhà chung GumballZ Hub. Nơi quy tụ anh em game thủ, cùng nhau chia sẻ tool, giao lưu kết bạn và nhận giveaway mỗi tuần.
                 </p>
                 <Link
                   href="https://discord.gg/gumballz"
@@ -313,7 +267,7 @@ export default function HubPage() {
                 </Link>
               </motion.div>
 
-              {/* Feature Card 5 */}
+              {/* Feature Card 5: Support */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className="clay-card p-6 space-y-4"
@@ -325,7 +279,7 @@ export default function HubPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Hỗ Trợ 24/7</h3>
-                      <p className="text-sm text-slate-600">Luôn sẵn sàng giúp đỡ</p>
+                      <p className="text-sm text-slate-600">Tận tâm & Uy tín</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 px-3 py-1 bg-cyan-200 border-2 border-slate-900 rounded-full">
@@ -334,7 +288,7 @@ export default function HubPage() {
                   </div>
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
-                  Đội ngũ hỗ trợ luôn sẵn sàng giải đáp thắc mắc và xử lý sự cố nhanh chóng.
+                  Đội ngũ Support chuyên nghiệp luôn túc trực để giải đáp mọi thắc mắc và xử lý các vấn đề kỹ thuật của bạn một cách nhanh nhất.
                 </p>
                 <Link
                   href="https://discord.gg/gumballz"
@@ -345,7 +299,7 @@ export default function HubPage() {
                 </Link>
               </motion.div>
 
-              {/* Feature Card 6 */}
+              {/* Feature Card 6: Docs */}
               <motion.div 
                 whileHover={{ y: -4 }}
                 className="clay-card p-6 space-y-4"
@@ -357,7 +311,7 @@ export default function HubPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">Tài Liệu</h3>
-                      <p className="text-sm text-slate-600">Hướng dẫn chi tiết</p>
+                      <p className="text-sm text-slate-600">Wiki hướng dẫn</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 px-3 py-1 bg-green-200 border-2 border-slate-900 rounded-full">
@@ -366,10 +320,10 @@ export default function HubPage() {
                   </div>
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
-                  Tài liệu hướng dẫn đầy đủ, dễ hiểu và cập nhật liên tục cho tất cả tính năng.
+                  Thư viện kiến thức chi tiết từ A-Z. Hướng dẫn sử dụng Mod Menu, viết Script và tích hợp API cho Developers. Đầy đủ và dễ hiểu.
                 </p>
                 <Link
-                  href="/downloads"
+                  href="/roblox/docs"
                   className="w-full py-2.5 bg-cyan-500 text-white font-bold rounded-xl border-[3px] border-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px hover:shadow-[2px_2px_0px_0px_#1E293B] transition-all text-center block text-sm"
                 >
                   Xem Docs

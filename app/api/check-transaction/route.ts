@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
-import crypto from 'crypto';
+import { generateModKey, generateRobloxKey } from '@/app/lib/key-generator';
 
 export const dynamic = 'force-dynamic';
-
-function generateVipKey(): string {
-  const shortKey = crypto.randomBytes(5).toString('hex').toUpperCase();
-  return `GUMBALLZ-${shortKey}`;
-}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -38,19 +33,32 @@ export async function GET(request: Request) {
 
         // Nếu là giao dịch mua key và chưa có key trong metadata thì tạo mới
         if (transaction.metadata?.type === 'key' && !vipKey) {
-            vipKey = generateVipKey();
-            const expiresAt = new Date();
+            const category = transaction.metadata?.category || 'mod'; // 'mod' or 'roblox'
             const days = transaction.metadata?.duration_days || 30;
+            
+            const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + days);
 
-            // Lưu key vào bảng mod_keys
-            await supabase.from('mod_keys').insert({
-                key_value: vipKey,
-                key_type: 'PREMIUM',
-                duration_days: days,
-                expires_at: expiresAt.toISOString(),
-                is_active: true
-            });
+            if (category === 'roblox') {
+                vipKey = generateRobloxKey();
+                await supabase.from('roblox_keys').insert({
+                    key_value: vipKey,
+                    key_type: 'premium',
+                    category: 'roblox',
+                    expires_at: expiresAt.toISOString(),
+                    is_used: false,
+                    metadata: { transaction_id: transaction.id, duration_days: days }
+                });
+            } else {
+                vipKey = generateModKey();
+                await supabase.from('mod_keys').insert({
+                    key_value: vipKey,
+                    key_type: 'PREMIUM',
+                    duration_days: days,
+                    expires_at: expiresAt.toISOString(),
+                    is_active: true
+                });
+            }
 
             // Cập nhật lại metadata của transaction để lần sau refresh vẫn thấy
             const newMetadata = { ...transaction.metadata, generated_key: vipKey };
@@ -64,7 +72,8 @@ export async function GET(request: Request) {
             success: true, 
             status: transaction.status,
             key: vipKey,
-            type: transaction.metadata?.type
+            type: transaction.metadata?.type,
+            category: transaction.metadata?.category
         });
     }
     
