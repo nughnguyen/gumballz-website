@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Gift, 
@@ -12,15 +12,14 @@ import {
   Loader2,
   Copy,
   Check,
-  Coins,
-  Key,
   ChevronDown,
   Smartphone,
   Terminal
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function KeysPage() {
+// Sub-component that uses useSearchParams
+function KeysContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [category, setCategory] = useState<"mod" | "roblox">((searchParams.get("type") as "mod" | "roblox") || "mod");
@@ -144,7 +143,7 @@ export default function KeysPage() {
             key={category + "-free"}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className={`clay-card p-10 flex flex-col relative overflow-hidden bg-gradient-to-br ${category === 'roblox' ? 'from-red-50 to-white' : 'from-green-50 to-white'}`}
+            className={`clay-card p-10 flex flex-col relative overflow-hidden bg-white ${category === 'roblox' ? 'bg-red-50/50' : 'bg-green-50/50'}`}
           >
             <div className="absolute top-0 right-0 p-8 opacity-5">
                <Gift className={`w-40 h-40 ${category === 'roblox' ? 'text-red-600' : 'text-green-600'}`} />
@@ -195,13 +194,12 @@ export default function KeysPage() {
               )}
             </AnimatePresence>
           </motion.div>
-
           {/* PREMIUM KEY CARD */}
           <motion.div
             key={category + "-premium"}
              initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className={`clay-card p-10 flex flex-col relative bg-gradient-to-br from-cyan-50 to-white border-[4px] ${category === 'roblox' ? '!border-red-500' : '!border-cyan-500'}`}
+            className={`clay-card p-10 flex flex-col relative bg-white border-4 ${category === 'roblox' ? 'border-red-500' : 'border-cyan-500'}`}
           >
             <div className="flex items-center justify-between mb-10">
               <div className={`p-4 rounded-2xl border-[3px] border-slate-900 shadow-[3px_3px_0px_0px_#1E293B] ${category === 'roblox' ? 'bg-red-100' : 'bg-cyan-100'}`}>
@@ -212,7 +210,6 @@ export default function KeysPage() {
 
             <h2 className="text-3xl font-black text-slate-900 mb-4">{category === 'roblox' ? 'KEY VIP SCRIPT' : 'KEY VIP MOD'}</h2>
             <p className="text-slate-600 mb-8 font-medium">Không quảng cáo. Kích hoạt và nhận key ngay lập tức qua hệ thống.</p>
-
             <div className="space-y-6 mb-10 grow">
               {/* Duration Select */}
               <div className="relative">
@@ -227,7 +224,6 @@ export default function KeysPage() {
                   </div>
                   <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showDuration ? "rotate-180" : ""}`} />
                 </button>
-
                 <AnimatePresence>
                   {showDuration && (
                     <motion.div 
@@ -270,7 +266,7 @@ export default function KeysPage() {
               <button
                 onClick={buyVipKey}
                 disabled={loadingVIP}
-                className={`clay-button w-full !py-5 !text-xl flex items-center justify-center gap-3 uppercase disabled:opacity-50 ${category === 'roblox' ? '!bg-red-500 active:!bg-red-600' : ''}`}
+                className={`clay-button w-full py-5 text-xl flex items-center justify-center gap-3 uppercase disabled:opacity-50 ${category === 'roblox' ? 'bg-red-500 hover:bg-red-600 active:bg-red-600' : ''}`}
               >
                 {loadingVIP ? <Loader2 className="animate-spin" /> : "MUA KEY VIP NGAY"}
               </button>
@@ -283,5 +279,18 @@ export default function KeysPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main Page Component with Suspense
+export default function KeysPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 animate-spin text-slate-900" />
+      </div>
+    }>
+      <KeysContent />
+    </Suspense>
   );
 }
