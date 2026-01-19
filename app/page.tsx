@@ -38,17 +38,17 @@ export default function HubPage() {
         {/* Hero Section - Cream/Beige Background */}
         <section className="bg-[#FFF9F5] px-6 py-12 pt-28">
           <div className="container mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left Content */}
+            <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
+              {/* Content */}
               <div className="space-y-8">
                 {/* Badge */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-100 border-[3px] border-slate-900 rounded-full shadow-[3px_3px_0px_0px_#1E293B] font-bold text-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm mx-auto"
                 >
                   <Bot className="w-4 h-4 text-cyan-600" />
-                  <span className="text-slate-900">Discord Bot với 10+ Minigames</span>
+                  <span className="text-slate-900 font-bold text-sm">Hệ sinh thái dịch vụ Roblox & Game Mobile</span>
                 </motion.div>
 
                 {/* Headline */}
@@ -56,21 +56,19 @@ export default function HubPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="text-5xl md:text-7xl font-black leading-tight"
+                  className="text-5xl md:text-7xl font-black leading-tight text-slate-900"
                 >
-                  Nền Tảng <br />
-                  <span className="text-cyan-500">Cộng Đồng</span><br />
-                  <span className="text-slate-900">Toàn Diện</span>
+                  Nâng Tầm Trải Nghiệm <br />
+                  <span className="text-cyan-500">GumballZ Hub</span>
                 </motion.h1>
                 
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-xl text-slate-600 leading-relaxed max-w-xl"
+                  className="text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto font-medium"
                 >
-                  Hệ thống tích hợp Discord Bot, thanh toán tự động và quản lý dịch vụ. 
-                  Mang đến trải nghiệm hoàn hảo cho cộng đồng của bạn.
+                  Cung cấp giải pháp toàn diện cho game thủ: Mod Menu cao cấp, Roblox Scripts tối ưu, hệ thống Coiz tiện lợi và kho Minigames giải trí đa dạng.
                 </motion.p>
 
                 {/* Buttons */}
@@ -78,20 +76,20 @@ export default function HubPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="flex flex-wrap gap-4"
+                  className="flex flex-wrap justify-center gap-4"
                 >
                   <Link
                     href="/keys"
-                    className="clay-button inline-flex items-center gap-2"
+                    className="clay-button inline-flex items-center gap-2 text-lg px-8 py-4"
                   >
-                    <Sparkles className="w-5 h-5" />
-                    Dùng Thử Miễn Phí
+                    <Sparkles className="w-6 h-6" />
+                    Lấy Key Miễn Phí
                   </Link>
                   <Link
-                    href="#features"
-                    className="clay-button-secondary"
+                    href="/roblox"
+                    className="clay-button-secondary inline-flex items-center gap-2 text-lg px-8 py-4"
                   >
-                    Tìm Hiểu Thêm
+                    Khám Phá Roblox Hub
                   </Link>
                 </motion.div>
 
@@ -100,19 +98,19 @@ export default function HubPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="flex flex-wrap gap-6 pt-4"
+                  className="flex flex-wrap justify-center gap-10 pt-8"
                 >
                   <div className="text-center">
-                    <div className="text-3xl font-black text-slate-900">10+</div>
-                    <div className="text-sm text-slate-600 font-medium">Minigames</div>
+                    <div className="text-4xl font-black text-slate-900">100k+</div>
+                    <div className="text-sm text-slate-600 font-bold uppercase tracking-wide mt-1">Người Dùng</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-black text-slate-900">24/7</div>
-                    <div className="text-sm text-slate-600 font-medium">Tự Động Hóa</div>
+                    <div className="text-4xl font-black text-slate-900">24/7</div>
+                    <div className="text-sm text-slate-600 font-bold uppercase tracking-wide mt-1">Hỗ Trợ</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-black text-slate-900">100%</div>
-                    <div className="text-sm text-slate-600 font-medium">Miễn Phí</div>
+                    <div className="text-4xl font-black text-slate-900">Top 1</div>
+                    <div className="text-sm text-slate-600 font-bold uppercase tracking-wide mt-1">Uy Tín</div>
                   </div>
                 </motion.div>
               </div>
