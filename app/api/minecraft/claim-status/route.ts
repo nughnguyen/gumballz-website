@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServer } from '@/app/utils/supabaseServer';
+import { serverSupabase } from '@/app/utils/supabaseServer';
 
 function generateClaimCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const orderId = searchParams.get('orderId');
     if (!orderId) return NextResponse.json({ success: false, error: 'Missing orderId' }, { status: 400 });
 
-    const supabase = createSupabaseServer();
+    const supabase = serverSupabase;
     const { data, error } = await supabase
         .from('transactions')
         .select('*')

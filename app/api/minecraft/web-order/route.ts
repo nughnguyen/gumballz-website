@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServer } from '@/app/utils/supabaseServer';
+import { serverSupabase } from '@/app/utils/supabaseServer';
 
 function generateCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         const rewardNum = parseInt(rewardXu) || amountNum;
 
         const orderCode = generateCode();
-        const supabase = createSupabaseServer();
+        const supabase = serverSupabase;
 
         const { data, error } = await supabase
             .from('transactions')
