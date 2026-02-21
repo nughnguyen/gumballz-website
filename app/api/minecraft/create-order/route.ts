@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         const { data, error } = await supabase
             .from('transactions')
             .insert({
-                user_id: playerName,
+                user_id: null,   // Minecraft players don't have Supabase accounts
                 amount: amountNum,
                 description: orderCode,
                 status: 'pending',
