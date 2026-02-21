@@ -30,8 +30,8 @@ export async function GET(request: Request) {
         const bankTranNo = vnp_Params['vnp_BankTranNo']; // Bank Transaction No
 
         const description = orderInfo || "";
-        // Extract User ID
-        const match = description.match(/GUMZ\s*[:]?\s*(\d+)/i);
+        // Extract ID/Code
+        const match = description.match(/(?:GUMZ|KEY|GZ|MC)\s*[:]?\s*([A-Za-z0-9]+)/i);
         const userId = match ? match[1] : null;
 
         if (userId) {

@@ -21,9 +21,9 @@ export async function POST(request: Request) {
         // }
 
         if (resultCode == 0) { // 0 means success in Momo
-             // Extract User ID from orderInfo ("GUMZ 123")
+             // Extract ID/Code from orderInfo ("GUMZ 123", "GZ12AB")
              const description = orderInfo || "";
-             const match = description.match(/GUMZ\s*[:]?\s*(\d+)/i);
+             const match = description.match(/(?:GUMZ|KEY|GZ|MC)\s*[:]?\s*([A-Za-z0-9]+)/i);
              const userId = match ? match[1] : null;
 
              if (userId) {

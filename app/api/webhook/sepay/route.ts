@@ -33,8 +33,8 @@ export async function POST(request: Request) {
              const amount = txn.amount || txn.transferAmount || 0;
              const bankTransId = txn.id || txn.transactionID || txn.referenceCode || `txn_${Date.now()}`;
              
-             // Extract Token from "GUMZXXXXXX" or "KEYXXXXXX"
-             let match = description.match(/(?:GUMZ|KEY)\s*[:.\- ]*\s*(\d+)/i);
+             // Extract Token from "GUMZXXXX", "KEYXXXX", "GZXXXX", or "MCXXXX"
+             let match = description.match(/(?:GUMZ|KEY|GZ|MC)\s*[:.\- ]*\s*([A-Za-z0-9]+)/i);
              if (!match) {
                  // Fallback: Try to find any consecutive 6 digits
                  match = description.match(/(\d{6})/);
