@@ -35,9 +35,14 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Not a Minecraft order' }, { status: 400 });
     }
 
+    const responseMeta = {
+        serverTime: Date.now(),
+        createdAt: new Date(data.created_at).getTime(),
+    };
+
     // Pending: still waiting for payment
     if (data.status !== 'success') {
-        return NextResponse.json({ success: false, status: 'pending' });
+        return NextResponse.json({ success: false, status: 'pending', ...responseMeta });
     }
 
     // Already has a claim code — just return it
@@ -48,7 +53,8 @@ export async function GET(req: NextRequest) {
             claimCode: meta.claimCode,
             playerName: meta.playerName,
             rewardValue: meta.rewardValue,
-            rewarded: data.rewarded
+            rewarded: data.rewarded,
+            ...responseMeta
         });
     }
 
@@ -57,7 +63,7 @@ export async function GET(req: NextRequest) {
     const { error: updateError } = await supabase
         .from('transactions')
         .update({ metadata: { ...meta, claimCode } })
-        .eq('id', orderId);
+        .eq('id', data.id); // Use data.id because orderId might be null if queried by code
 
     if (updateError) {
         return NextResponse.json({ success: false, error: 'Failed to generate claim code' }, { status: 500 });
@@ -69,6 +75,7 @@ export async function GET(req: NextRequest) {
         claimCode,
         playerName: meta.playerName,
         rewardValue: meta.rewardValue,
-        rewarded: data.rewarded
+        rewarded: data.rewarded,
+        ...responseMeta
     });
 }

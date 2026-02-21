@@ -45,14 +45,14 @@ function PayContent() {
   useEffect(() => {
     if ((!orderId && !pluginCode) || pollStatus !== "waiting") return;
     
-    // For plugin flow, we assume a 10m window from now since we don't have the exact creation time
-    // For website flow, we use a 10m window
-    const expiry = Date.now() + 10 * 60 * 1000;
-    
     const tick = setInterval(() => {
-      const diff = expiry - Date.now();
-      if (diff <= 0) { setPollStatus("expired"); setTimeLeft(0); clearInterval(tick); }
-      else setTimeLeft(Math.floor(diff / 1000));
+      // If we don't have server timing yet, just wait or show default 10m
+      // The poll interval below will soon provide exact timing
+      setTimeLeft(prev => {
+        if (prev === null) return 600; // Default 10m
+        if (prev <= 0) { setPollStatus("expired"); return 0; }
+        return prev - 1;
+      });
     }, 1000);
     return () => clearInterval(tick);
   }, [orderId, pluginCode, pollStatus]);
@@ -64,6 +64,19 @@ function PayContent() {
       try {
         const r = await fetch(`/api/minecraft/claim-status?${query}`);
         const d = await r.json();
+        
+        // Sync timer with server
+        if (d.createdAt && d.serverTime) {
+          const expiryMs = d.createdAt + 10 * 60 * 1000;
+          const diff = expiryMs - d.serverTime;
+          if (diff <= 0) {
+            setPollStatus("expired");
+            setTimeLeft(0);
+          } else {
+            setTimeLeft(Math.floor(diff / 1000));
+          }
+        }
+
         if (d.success && d.status === "paid") {
           setClaimCode(d.claimCode);
           setPollStatus("success");

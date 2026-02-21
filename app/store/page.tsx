@@ -153,20 +153,16 @@ export default function StorePage() {
 
   // ── Minecraft Logic ─────────────────────────────────────────
   useEffect(() => {
-    if (!mcOrder || mcStep !== "qr") return;
-    const expiryMs = mcOrder.expiry * 1000;
+    if (!mcOrder || mcStep !== "qr" || mcPollStatus !== "waiting") return;
     const tick = setInterval(() => {
-      const diff = expiryMs - Date.now();
-      if (diff <= 0) {
-        setMcTimeLeft(0);
-        setMcPollStatus("expired");
-        clearInterval(tick);
-      } else {
-        setMcTimeLeft(Math.floor(diff / 1000));
-      }
+      setMcTimeLeft(prev => {
+        if (prev === null) return 600;
+        if (prev <= 0) { setMcPollStatus("expired"); return 0; }
+        return prev - 1;
+      });
     }, 1000);
     return () => clearInterval(tick);
-  }, [mcOrder, mcStep]);
+  }, [mcOrder, mcStep, mcPollStatus]);
 
   useEffect(() => {
     if (!mcOrder || mcStep !== "qr" || mcPollStatus !== "waiting") return;
@@ -174,6 +170,19 @@ export default function StorePage() {
       try {
         const res = await fetch(`/api/minecraft/claim-status?orderId=${mcOrder.orderId}`);
         const data = await res.json();
+        
+        // Sync timer with server
+        if (data.createdAt && data.serverTime) {
+          const expiryMs = data.createdAt + 10 * 60 * 1000;
+          const diff = expiryMs - data.serverTime;
+          if (diff <= 0) {
+            setMcPollStatus("expired");
+            setMcTimeLeft(0);
+          } else {
+            setMcTimeLeft(Math.floor(diff / 1000));
+          }
+        }
+
         if (data.success && data.status === "paid") {
           setMcClaimCode(data.claimCode);
           setMcPollStatus("success");
