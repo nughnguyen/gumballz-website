@@ -13,17 +13,22 @@ function generateClaimCode(): string {
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get('orderId');
-    if (!orderId) return NextResponse.json({ success: false, error: 'Missing orderId' }, { status: 400 });
+    const code = searchParams.get('code');
+    if (!orderId && !code) return NextResponse.json({ success: false, error: 'Missing orderId or code' }, { status: 400 });
 
-    const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+    let query = supabase.from('transactions').select('*');
+    if (orderId) {
+        query = query.eq('id', orderId);
+    } else if (code) {
+        query = query.ilike('description', `%${code}%`).order('created_at', { ascending: false }).limit(1);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
         return NextResponse.json({ success: false, status: 'not_found' }, { status: 404 });
     }
+
 
     const meta = data.metadata || {};
     if (!['minecraft', 'minecraft_web'].includes(meta.type)) {
@@ -32,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     // Pending: still waiting for payment
     if (data.status !== 'success') {
-        return NextResponse.json({ success: false, status: 'pending' });
+        return NextResponse.json({ success: true, status: 'pending', created_at: data.created_at });
     }
 
     // Already has a claim code — just return it
