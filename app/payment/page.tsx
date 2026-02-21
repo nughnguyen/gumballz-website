@@ -292,7 +292,7 @@ function PaymentCard() {
                 </div>
 
                 <div className="text-center pt-4">
-                  <div className="inline-flex items-center gap-2 text-slate-500 font-bold">
+                  <div className="inline-flex items-center gap-2 text-slate-700 font-bold">
                     <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
                     <span className="text-sm">Đang chờ thanh toán...</span>
                   </div>
@@ -341,7 +341,7 @@ function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = f
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <span className="text-slate-500 text-xs font-bold uppercase">{label}</span>
+        <span className="text-slate-600 text-xs font-bold uppercase">{label}</span>
         <div className="flex items-center gap-2">
           <span className={`font-bold ${highlight ? "text-cyan-500" : "text-slate-900"} ${isMono ? "font-mono" : ""}`}>
             {value}

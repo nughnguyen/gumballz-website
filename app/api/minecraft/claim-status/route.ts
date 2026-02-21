@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     // Pending: still waiting for payment
     if (data.status !== 'success') {
-        return NextResponse.json({ success: true, status: 'pending', created_at: data.created_at });
+        return NextResponse.json({ success: false, status: 'pending' });
     }
 
     // Already has a claim code — just return it

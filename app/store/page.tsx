@@ -67,7 +67,7 @@ function Row({ label, value, mono = false, highlight = false, onCopy, copied }: 
 }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-slate-400 font-bold text-xs uppercase">{label}</span>
+      <span className="text-slate-600 font-bold text-xs uppercase">{label}</span>
       <div className="flex items-center gap-2">
         <span className={`font-bold ${mono ? "font-mono" : ""} ${highlight ? "text-cyan-600" : "text-slate-800"}`}>{value}</span>
         {onCopy && (
