@@ -11,20 +11,17 @@ export async function POST(request: Request) {
         console.log("SePay Webhook payload:", body);
 
         // Normalize transactions list
-        // SePay typically sends a single object, but we'll support array just in case
         let transactions: any[] = [];
         
         if (body.data && Array.isArray(body.data)) {
             transactions = body.data;
-        } else if (body.id && (body.gateway || body.transferAmount)) {
-            // Standard SePay single transaction payload
+        } else if (body.id) {
             transactions = [body];
         } else if (body.transactions && Array.isArray(body.transactions)) {
             transactions = body.transactions;
         }
 
         if (transactions.length === 0) {
-             console.log("SePay Webhook: No transactions found in payload");
              return NextResponse.json({ success: true, message: 'No transactions found' });
         }
 
@@ -36,7 +33,6 @@ export async function POST(request: Request) {
              // Extract Token from "GUMZXXXX", "KEYXXXX", "GZXXXX", or "MCXXXX"
              let match = description.match(/(?:GUMZ|KEY|GZ|MC)\s*[:.\- ]*\s*([A-Za-z0-9]+)/i);
              if (!match) {
-                 // Fallback: Try to find any consecutive 6 digits
                  match = description.match(/(\d{6})/);
              }
 
@@ -45,81 +41,67 @@ export async function POST(request: Request) {
              if (token) {
                  console.log(`SePay Webhook: Found raw token '${token}' in '${description}'`);
                  
-                 // Handle Prefix/Suffix garbage
-                 if (token.length < 15) {
-                     // If token is exactly 6 digits (or close to it), use it.
-                     // The previous logic trimmed > 6 chars, which is fine if we matched a longer number starting with the token.
-                     if (token.length > 6) {
-                         token = token.substring(0, 6);
-                         console.log(`> Trimmed token to 6 digits: '${token}'`);
-                     }
+                 // Try to find a pending transaction with this token in description
+                 const { data: pendingTxn } = await supabase
+                     .from('transactions')
+                     .select('id, user_id, created_at, metadata')
+                     .eq('status', 'pending')
+                     .ilike('description', `%${token}%`)
+                     .maybeSingle();
+
+                 if (pendingTxn) {
+                     const createdAt = new Date(pendingTxn.created_at).getTime();
+                     const now = Date.now();
+                     const diffMinutes = (now - createdAt) / (1000 * 60);
                      
-                     // NEW FLOW: Token is unique order code
-                     const { data: pendingTxn } = await supabase
-                         .from('transactions')
-                         .select('id, user_id, created_at, metadata')
-                         .eq('status', 'pending')
-                         .ilike('description', `%${token}%`)
-                         .maybeSingle();
-
-                     if (pendingTxn) {
-                         // Check Time Limit (10 minutes)
-                         const createdAt = new Date(pendingTxn.created_at).getTime();
-                         const now = Date.now();
-                         const diffMinutes = (now - createdAt) / (1000 * 60);
-                         
-                         let newStatus = 'success';
-                         if (diffMinutes > 10) {
-                             newStatus = 'late_payment';
-                             console.log(`Transaction ${token} received late (${diffMinutes.toFixed(1)} mins).`);
-                         }
-
-                         // Update existing pending transaction
-                         await supabase.from('transactions').update({
-                             status: newStatus,
-                             transaction_id: bankTransId.toString(),
-                             amount: amount, 
-                             metadata: { ...(pendingTxn.metadata as object), bank_desc: description, source: 'sepay' }
-                         }).eq('id', pendingTxn.id);
-                     } else {
-                         // Code not found, check if it's already processed
-                         const { data: existing } = await supabase
-                            .from('transactions')
-                            .select('id')
-                            .eq('transaction_id', bankTransId.toString())
-                            .maybeSingle();
-                        
-                         if (!existing) {
-                              await supabase.from('transactions').insert({
-                                 user_id: 0, 
-                                 amount: amount,
-                                 description: description,
-                                 status: 'ignored_code_not_found',
-                                 transaction_id: bankTransId.toString(),
-                                 rewarded: false,
-                                 metadata: { source: 'sepay', original_desc: description }
-                             });
-                         }
+                     let newStatus = 'success';
+                     if (diffMinutes > 10) {
+                         newStatus = 'late_payment';
+                         console.log(`Transaction ${token} received late (${diffMinutes.toFixed(1)} mins).`);
                      }
+
+                     await supabase.from('transactions').update({
+                         status: newStatus,
+                         transaction_id: bankTransId.toString(),
+                         amount: amount, 
+                         metadata: { ...(pendingTxn.metadata as object), bank_desc: description, source: 'sepay' }
+                     }).eq('id', pendingTxn.id);
                  } else {
-                     // Legacy/Fallback flow
                      const { data: existing } = await supabase
                         .from('transactions')
                         .select('id')
                         .eq('transaction_id', bankTransId.toString())
                         .maybeSingle();
-                     
+                    
                      if (!existing) {
-                         await supabase.from('transactions').insert({
-                             user_id: parseInt(token),
+                          await supabase.from('transactions').insert({
+                             user_id: 0, 
                              amount: amount,
                              description: description,
-                             status: 'success',
+                             status: 'ignored_code_not_found',
                              transaction_id: bankTransId.toString(),
                              rewarded: false,
-                              metadata: { source: 'sepay' }
+                             metadata: { source: 'sepay', original_desc: description }
                          });
                      }
+                 }
+             } else {
+                 const { data: existing } = await supabase
+                    .from('transactions')
+                    .select('id')
+                    .eq('transaction_id', bankTransId.toString())
+                    .maybeSingle();
+                 
+                 if (!existing) {
+                     await supabase.from('transactions').insert({
+                         user_id: 0,
+                         amount: amount,
+                         description: description,
+                         status: 'success',
+                         transaction_id: bankTransId.toString(),
+                         rewarded: false,
+                          metadata: { source: 'sepay' }
+                     });
                  }
              }
         }

@@ -91,13 +91,13 @@ function PayContent() {
     return (
       <div className="min-h-screen bg-[#FFF9F5] pt-28 pb-20 px-4">
         <div className="max-w-lg mx-auto space-y-6">
-          <div className="clay-card p-6 bg-gradient-to-br from-cyan-500 to-cyan-600 flex justify-between items-center shadow-[4px_4px_0px_0px_#1E293B]">
+          <div className="clay-card p-6 bg-linear-to-br from-cyan-400 to-cyan-500 flex justify-between items-center shadow-[4px_4px_0px_0px_#1E293B]">
             <div>
-              <div className="text-cyan-100 text-xs font-black uppercase tracking-widest mb-1">Số tiền thanh toán</div>
-              <div className="text-4xl font-black text-white">{amtNum.toLocaleString("vi-VN")}đ</div>
+              <div className="text-slate-900/60 text-xs font-black uppercase tracking-widest mb-1">Số tiền thanh toán</div>
+              <div className="text-4xl font-black text-slate-900">{amtNum.toLocaleString("vi-VN")}đ</div>
             </div>
             {timeLeft !== null && (
-              <div className="bg-white/20 backdrop-blur-md border-2 border-white/30 px-4 py-2 rounded-full font-mono text-white font-black">
+              <div className="bg-white/30 backdrop-blur-md border-[3px] border-slate-900/20 px-4 py-2 rounded-full font-mono text-slate-900 font-black">
                 {fmtTime(timeLeft)}
               </div>
             )}

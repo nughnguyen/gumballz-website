@@ -303,17 +303,17 @@ function PaymentCard() {
 
           {/* Amount Card - Full Width Horizontal Rectangle */}
           {status !== "success" && (
-            <div className="clay-card p-6 bg-gradient-to-br from-cyan-500 to-cyan-600 relative overflow-hidden max-w-[732px] mx-auto">
+            <div className="clay-card p-6 bg-linear-to-br from-cyan-400 to-cyan-500 relative overflow-hidden max-w-[732px] mx-auto">
               <div className="relative z-10 flex items-center justify-center gap-8">
                 <div className="text-center">
-                  <div className="text-slate-900 text-xs font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
+                  <div className="text-slate-900/60 text-xs font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
                   <div className="text-4xl md:text-5xl font-black text-slate-900">{formattedAmount}</div>
                 </div>
                 
                 {timeLeft !== null && (
-                  <div className="flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-3 rounded-full border-2 border-slate-900/30">
+                  <div className="flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-3 rounded-full border-2 border-slate-900/10">
                     <Clock className={`w-4 h-4 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
-                    <span className="text-xs font-bold text-slate-900">Hết hạn sau:</span>
+                    <span className="text-xs font-bold text-slate-900/60">Hết hạn sau:</span>
                     <span className="font-mono font-black text-slate-900 text-lg">{formatTime(timeLeft)}</span>
                   </div>
                 )}
