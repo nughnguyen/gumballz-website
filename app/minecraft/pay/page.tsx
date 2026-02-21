@@ -168,7 +168,7 @@ function PayContent() {
                 </p>
               </div>
             </div>
-            <Link href="/minecraft/store" className="clay-button flex items-center justify-center gap-2">
+            <Link href="/store" className="clay-button flex items-center justify-center gap-2">
               <ArrowLeft className="w-4 h-4" /> Nạp thêm
             </Link>
           </motion.div>
@@ -185,7 +185,7 @@ function PayContent() {
             {pollStatus === "expired" && (
               <div className="text-red-600 font-black">Đơn hàng đã hết hạn. Vui lòng tạo lại.</div>
             )}
-            <Link href="/minecraft/store" className="clay-button flex items-center justify-center gap-2">
+            <Link href="/store" className="clay-button flex items-center justify-center gap-2">
               <ArrowLeft className="w-4 h-4" /> Về cửa hàng
             </Link>
           </div>

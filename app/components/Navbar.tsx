@@ -21,9 +21,8 @@ export default function Navbar() {
   const navItems = [
     { name: "Trang Chủ", href: "/" },
     { name: "Cửa Hàng", href: "/store" },
-    { name: "Minecraft", href: "/minecraft/store" },
     { name: "Lấy Key", href: "/keys" },
-    { name: "Docs", href: "/docs" },
+    { name: "Tài Liệu", href: "/docs" },
   ];
 
   return (
