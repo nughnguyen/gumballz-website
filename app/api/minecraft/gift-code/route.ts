@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverSupabase } from '@/app/utils/supabaseServer';
+import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
 
 function generateGiftCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -26,8 +26,6 @@ export async function POST(req: NextRequest) {
         }
 
         const giftCode = generateGiftCode();
-        const supabase = serverSupabase;
-
         const { data, error } = await supabase
             .from('transactions')
             .insert({

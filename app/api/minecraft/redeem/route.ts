@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverSupabase } from '@/app/utils/supabaseServer';
+import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
 
 // POST /api/minecraft/redeem
 // Called by the Minecraft plugin when player does /napthe redeem <code>
@@ -18,10 +18,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Missing code or playerName' }, { status: 400 });
         }
 
-        const supabase = serverSupabase;
-
-        // Find a transaction with this claim code in metadata
-        // Both minecraft_web (payment claim codes) and minecraft_gift (gift codes)
         const { data: rows, error } = await supabase
             .from('transactions')
             .select('*')
