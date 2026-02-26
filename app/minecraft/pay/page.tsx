@@ -2,86 +2,97 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  CheckCircle2, Copy, Check, Clock, Loader2, AlertCircle, ArrowLeft,
-  Coins, Shield, Zap, QrCode, ExternalLink
+  Copy, Check, ShieldCheck, Loader2, Clock, AlertCircle,
+  CreditCard, Download, CheckCircle2, ArrowLeft, Coins
 } from "lucide-react";
 import Link from "next/link";
 
-/* ─── Discord-style design tokens ─────────────────────────────── */
-const C = {
-  bg:        "#23272a",
-  surface:   "#2c2f33",
-  elevated:  "#36393f",
-  border:    "#40444b",
-  blurple:   "#5865F2",
-  blurpleHover: "#4752c4",
-  green:     "#3ba55d",
-  red:       "#ed4245",
-  yellow:    "#faa61a",
-  textPrimary: "#dcddde",
-  textSecondary: "#b9bbbe",
-  textMuted: "#72767d",
+const BANK = {
+  id:      process.env.NEXT_PUBLIC_BANK_ID      || "OCB",
+  account: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO   || "",
+  name:    process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "NGUYEN QUOC HUNG",
 };
+
+function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = false }: {
+  label: string; value: string; highlight?: boolean;
+  onCopy?: () => void; copied?: boolean; isMono?: boolean;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <span className="text-slate-600 text-xs font-bold uppercase">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className={`font-bold ${highlight ? "text-cyan-500" : "text-slate-900"} ${isMono ? "font-mono" : ""}`}>
+            {value}
+          </span>
+          {onCopy && (
+            <button onClick={onCopy} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-slate-400" />}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PayContent() {
   const sp = useSearchParams();
-  const orderId    = sp.get("orderId");   // present in both plugin (new) and web flows
-  const pluginCode = sp.get("code");      // always present — the MC order code
+  const orderId    = sp.get("orderId");
+  const pluginCode = sp.get("code");
   const pluginAmount = sp.get("amount");
 
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const serverOffsetRef = useRef<number>(0); // ms difference between server & client clocks
+  const [timeLeft,   setTimeLeft]   = useState<number | null>(null);
   const [pollStatus, setPollStatus] = useState<"waiting" | "success" | "expired">("waiting");
-  const [claimCode, setClaimCode] = useState<string | null>(null);
-  const [rewardValue, setRewardValue] = useState<string | null>(null);
-  const [copied, setCopied] = useState("");
-  const [loadErr, setLoadErr] = useState("");
+  const [claimCode,  setClaimCode]  = useState<string | null>(null);
+  const [copied,     setCopied]     = useState("");
+  const [loadErr,    setLoadErr]    = useState("");
   const [firstFetchDone, setFirstFetchDone] = useState(false);
 
-  const bankId      = process.env.NEXT_PUBLIC_BANK_ID || "OCB";
-  const accountNo   = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO || "";
-  const accountName = process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "";
+  const amtNum = pluginAmount ? parseInt(pluginAmount) : 0;
+  const formattedAmount = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amtNum);
 
   const qrUrl = pluginCode && pluginAmount
-    ? `https://img.vietqr.io/image/${bankId.toLowerCase()}-${accountNo}-qr_only.png?amount=${pluginAmount}&addInfo=${pluginCode}&accountName=${encodeURIComponent(accountName)}`
+    ? `https://img.vietqr.io/image/${BANK.id.toLowerCase()}-${BANK.account}-qr_only.png?amount=${pluginAmount}&addInfo=${pluginCode}&accountName=${encodeURIComponent(BANK.name)}`
     : null;
 
-  const amtNum = pluginAmount ? parseInt(pluginAmount) : 0;
-
-  const fmtTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopied(key);
     setTimeout(() => setCopied(""), 2000);
   };
+  const handleDownloadQR = async () => {
+    if (!qrUrl) return;
+    try {
+      const blob = await fetch(qrUrl).then(r => r.blob());
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `QR-${pluginCode}-${pluginAmount}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+  };
 
-  // ── Helper: process a claim-status API response ───────────────────
+  // ── process API response ────────────────────────────────────────
   function processResponse(d: any) {
-    // Sync timer using server timestamps (persists across F5)
     if (d.createdAt && d.serverTime) {
-      serverOffsetRef.current = d.serverTime - Date.now(); // calibrate client ↔ server
       const expiryMs = d.createdAt + 10 * 60 * 1000;
-      const nowMs = Date.now() + serverOffsetRef.current;
-      const diff = Math.max(0, expiryMs - nowMs);
+      const nowMs    = Date.now() + (d.serverTime - Date.now());
+      const diff     = Math.max(0, expiryMs - nowMs);
       setTimeLeft(Math.floor(diff / 1000));
     }
-
-    if (d.status === "expired") {
-      setPollStatus("expired");
-      setTimeLeft(0);
-      return;
-    }
-
+    if (d.status === "expired") { setPollStatus("expired"); setTimeLeft(0); return; }
     if (d.success && d.status === "paid") {
       setClaimCode(d.claimCode ?? null);
-      setRewardValue(d.rewardValue ?? null);
       setPollStatus("success");
     }
   }
 
-  // ── First fetch immediately on mount (fixes F5 reset) ───────────
+  // ── First fetch on mount (fixes F5 timer reset) ───────────────────
   useEffect(() => {
     if (!orderId && !pluginCode) return;
     const query = orderId ? `orderId=${orderId}` : `code=${pluginCode}`;
@@ -92,28 +103,21 @@ function PayContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Countdown tick (only after first fetch to avoid 600-default) ──
+  // ── Countdown (only after first fetch) ───────────────────────────
   useEffect(() => {
-    if (!firstFetchDone || pollStatus !== "waiting" || timeLeft === null) return;
-    if (timeLeft <= 0) { setPollStatus("expired"); return; }
-    const t = setTimeout(() => {
-      setTimeLeft(prev => {
-        if (prev === null || prev <= 0) { setPollStatus("expired"); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
+    if (!firstFetchDone || pollStatus !== "waiting" || timeLeft === null || timeLeft <= 0) return;
+    const t = setTimeout(() => setTimeLeft(p => (!p || p <= 1) ? (setPollStatus("expired"), 0) : p - 1), 1000);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstFetchDone, timeLeft, pollStatus]);
 
-  // ── Poll every 4 s ────────────────────────────────────────────────
+  // ── Poll every 4 s ─────────────────────────────────────────────────
   useEffect(() => {
     if (!firstFetchDone || pollStatus !== "waiting") return;
     const query = orderId ? `orderId=${orderId}` : `code=${pluginCode}`;
     const iv = setInterval(async () => {
       try {
-        const r = await fetch(`/api/minecraft/claim-status?${query}`);
-        const d = await r.json();
+        const d = await fetch(`/api/minecraft/claim-status?${query}`).then(r => r.json());
         processResponse(d);
         if (d.status === "paid" || d.status === "expired") clearInterval(iv);
       } catch { /* ignore */ }
@@ -122,17 +126,15 @@ function PayContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstFetchDone, pollStatus]);
 
-  // ── No params → invalid page ──────────────────────────────────────
+  // ── No params ──────────────────────────────────────────────────────
   if (!orderId && !pluginCode) {
     return (
-      <div style={{ background: C.bg }} className="min-h-screen flex items-center justify-center px-4">
-        <div style={{ background: C.surface, border: `1px solid ${C.border}` }} className="rounded-2xl p-8 text-center max-w-sm w-full">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: C.red }} />
-          <h2 className="text-xl font-bold mb-2" style={{ color: C.textPrimary }}>Trang không hợp lệ</h2>
-          <p className="text-sm mb-6" style={{ color: C.textSecondary }}>Đến cửa hàng Minecraft để tạo đơn hàng mới.</p>
-          <Link href="/minecraft/store"
-            className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg font-semibold text-sm transition-colors text-white"
-            style={{ background: C.blurple }}>
+      <div className="min-h-screen bg-[#FFF9F5] flex items-center justify-center px-4">
+        <div className="clay-card p-10 text-center max-w-sm">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-black text-slate-900 mb-2">Trang không hợp lệ</h2>
+          <p className="text-slate-500 mb-6">Dùng lệnh /napthe trong game để tạo đơn mới.</p>
+          <Link href="/minecraft/store" className="clay-button flex items-center justify-center gap-2">
             <Coins className="w-4 h-4" /> Đến cửa hàng
           </Link>
         </div>
@@ -140,234 +142,209 @@ function PayContent() {
     );
   }
 
-  // ── Success state ─────────────────────────────────────────────────
-  if (pollStatus === "success") {
-    return (
-      <div style={{ background: C.bg }} className="min-h-screen flex items-center justify-center px-4 py-12">
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            style={{ background: C.surface, border: `1px solid ${C.border}` }}
-            className="rounded-2xl p-8 text-center max-w-sm w-full space-y-6"
-          >
-            {/* Animated check */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.15, type: "spring", damping: 12, stiffness: 400 }}
-              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
-              style={{ background: `${C.green}20`, border: `2px solid ${C.green}` }}
-            >
-              <CheckCircle2 className="w-10 h-10" style={{ color: C.green }} />
-            </motion.div>
-
-            <div>
-              <h2 className="text-2xl font-bold mb-1" style={{ color: C.textPrimary }}>Thanh toán thành công!</h2>
-              <p className="text-sm" style={{ color: C.textSecondary }}>
-                Hệ thống đã xác nhận giao dịch của bạn.
-              </p>
-            </div>
-
-            {claimCode && (
-              <div className="rounded-xl p-4 space-y-3" style={{ background: C.elevated, border: `1px solid ${C.border}` }}>
-                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: C.textMuted }}>Mã nhận xu</p>
-                <div className="relative flex items-center justify-center">
-                  <code className="text-2xl font-bold tracking-widest font-mono" style={{ color: C.blurple }}>{claimCode}</code>
-                  <button onClick={() => handleCopy(claimCode, "c")}
-                    className="absolute right-0 p-1.5 rounded-lg transition-colors"
-                    style={{ background: copied === "c" ? `${C.green}30` : C.border }}>
-                    {copied === "c" ? <Check className="w-4 h-4" style={{ color: C.green }} /> : <Copy className="w-4 h-4" style={{ color: C.textSecondary }} />}
-                  </button>
-                </div>
-                <div className="flex items-center justify-center gap-2 p-2 rounded-lg" style={{ background: C.bg }}>
-                  <code className="text-sm font-mono" style={{ color: C.textSecondary }}>
-                    /napthe redeem <span style={{ color: C.yellow }} className="font-bold">{claimCode}</span>
-                  </code>
-                  <button onClick={() => handleCopy(`/napthe redeem ${claimCode}`, "cmd")}
-                    className="p-1 rounded transition-colors" style={{ color: copied === "cmd" ? C.green : C.textMuted }}>
-                    {copied === "cmd" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                <p className="text-xs" style={{ color: C.textMuted }}>Nhập lệnh trên vào chat trong game để nhận xu</p>
-              </div>
-            )}
-
-            {!claimCode && (
-              <div className="rounded-xl p-4" style={{ background: `${C.green}15`, border: `1px solid ${C.green}40` }}>
-                <p className="text-sm font-semibold" style={{ color: C.green }}>
-                  Plugin đã nhận được xác nhận. Xu sẽ được cộng vào tài khoản trong game của bạn!
-                </p>
-              </div>
-            )}
-
-            <Link href="/store"
-              className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg font-semibold text-sm w-full transition-opacity hover:opacity-80 text-white"
-              style={{ background: C.blurple }}>
-              <ArrowLeft className="w-4 h-4" /> Nạp thêm
-            </Link>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    );
-  }
-
-  // ── Waiting / Expired state ───────────────────────────────────────
-  const progressPct = timeLeft !== null ? Math.max(0, (timeLeft / 600) * 100) : 100;
-  const progressColor = timeLeft !== null
-    ? (timeLeft > 180 ? C.green : timeLeft > 60 ? C.yellow : C.red)
-    : C.blurple;
+  const isExpired = pollStatus === "expired";
 
   return (
-    <div style={{ background: C.bg }} className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-3">
+    <div className="min-h-screen bg-[#FFF9F5] pt-28 pb-20 px-6">
+      <div className="container mx-auto max-w-4xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
 
-        {/* Header banner */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: C.blurple }}>
-            <Coins className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight" style={{ color: C.textPrimary }}>Thanh toán GumballZ</h1>
-            <p className="text-xs" style={{ color: C.textMuted }}>Chuyển khoản ngân hàng • VietQR</p>
-          </div>
-        </div>
+          {/* ── Success State ─────────────────────────────────────── */}
+          {pollStatus === "success" ? (
+            <div className="max-w-[732px] mx-auto">
+              <div className="clay-card p-10 text-center space-y-6">
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="w-20 h-20 bg-green-100 border-[3px] border-slate-900 rounded-full flex items-center justify-center mx-auto shadow-[3px_3px_0px_0px_#1E293B]"
+                >
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </motion.div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 mb-2">Thanh toán thành công!</h2>
+                  <p className="text-slate-600 font-medium">Hệ thống đã xác nhận giao dịch của bạn</p>
+                </div>
 
-        {/* Amount + timer card */}
-        <div className="rounded-2xl p-5" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: C.textMuted }}>Số tiền thanh toán</p>
-              <p className="text-3xl font-bold" style={{ color: C.textPrimary }}>
-                {amtNum.toLocaleString("vi-VN")}đ
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: C.textMuted }}>Hết hạn sau</p>
-              {timeLeft === null ? (
-                <Loader2 className="w-5 h-5 animate-spin ml-auto" style={{ color: C.textMuted }} />
-              ) : (
-                <p className="text-2xl font-bold font-mono" style={{ color: progressColor }}>
-                  {fmtTime(timeLeft)}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.border }}>
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: progressColor }}
-              animate={{ width: `${progressPct}%` }}
-              transition={{ duration: 1, ease: "linear" }}
-            />
-          </div>
-        </div>
-
-        {/* Expired state */}
-        <AnimatePresence>
-          {pollStatus === "expired" && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl p-4 flex items-center gap-3"
-              style={{ background: `${C.red}15`, border: `1px solid ${C.red}40` }}>
-              <AlertCircle className="w-5 h-5 shrink-0" style={{ color: C.red }} />
-              <div>
-                <p className="font-semibold text-sm" style={{ color: C.red }}>Đơn hàng đã hết hạn</p>
-                <p className="text-xs mt-0.5" style={{ color: C.textSecondary }}>Vui lòng dùng lệnh <code className="font-mono">/napthe</code> trong game để tạo đơn mới.</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* QR code + bank info */}
-        {qrUrl && pollStatus === "waiting" && (
-          <div className="rounded-2xl overflow-hidden" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-            {/* QR */}
-            <div className="p-5 flex flex-col items-center gap-3" style={{ background: C.elevated }}>
-              <div className="w-full max-w-[220px] rounded-xl overflow-hidden bg-white p-3">
-                <img src={qrUrl} alt="QR thanh toán" className="w-full h-auto" />
-              </div>
-              <p className="text-xs" style={{ color: C.textMuted }}>Quét mã QR bằng ứng dụng ngân hàng</p>
-            </div>
-
-            {/* Bank details */}
-            <div className="p-4 space-y-3">
-              {[
-                { label: "Ngân hàng", value: bankId, copyKey: "" },
-                { label: "Số tài khoản", value: accountNo, copyKey: "acc" },
-              ].map(({ label, value, copyKey }) => (
-                <div key={label} className="flex justify-between items-center py-2" style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: C.textMuted }}>{label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-sm" style={{ color: C.textPrimary }}>{value}</span>
-                    {copyKey && (
-                      <button onClick={() => handleCopy(value, copyKey)}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ background: copied === copyKey ? `${C.green}30` : C.border }}>
-                        {copied === copyKey ? <Check className="w-3.5 h-3.5" style={{ color: C.green }} /> : <Copy className="w-3.5 h-3.5" style={{ color: C.textSecondary }} />}
+                {claimCode && (
+                  <div className="clay-card p-6 bg-gradient-to-br from-cyan-50 to-white space-y-4 text-left">
+                    <div className="flex items-center gap-2 text-cyan-600 font-bold">
+                      <Coins className="w-5 h-5" /> Mã nhận xu của bạn
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-grow bg-slate-100 border-[3px] border-slate-900 p-4 rounded-xl font-mono text-lg font-black text-slate-900 shadow-[2px_2px_0px_0px_#1E293B]">
+                        {claimCode}
+                      </div>
+                      <button
+                        onClick={() => handleCopy(claimCode, "c")}
+                        className="p-4 bg-cyan-500 border-[3px] border-slate-900 rounded-xl text-white shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all"
+                      >
+                        {copied === "c" ? <Check /> : <Copy />}
                       </button>
+                    </div>
+                    <div className="bg-slate-900 rounded-xl p-3 text-center">
+                      <code className="text-cyan-300 font-mono text-sm">
+                        /napthe redeem <span className="text-yellow-300 font-black">{claimCode}</span>
+                      </code>
+                    </div>
+                    <p className="text-xs text-slate-500 font-bold text-center">Nhập lệnh trên vào chat trong game để nhận xu</p>
+                  </div>
+                )}
+
+                {!claimCode && (
+                  <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                    <p className="text-green-700 font-semibold text-sm">Xu đã được cộng vào tài khoản trong game của bạn!</p>
+                  </div>
+                )}
+
+                <Link href="/store" className="clay-button flex items-center justify-center gap-2">
+                  <ArrowLeft className="w-4 h-4" /> Nạp thêm
+                </Link>
+              </div>
+            </div>
+          ) : (
+            /* ── Waiting / Expired State ────────────────────────────── */
+            <>
+              {/* 2-column grid: QR left | Bank info right */}
+              <div className="grid lg:grid-cols-2 gap-8 items-start max-w-[732px] mx-auto">
+
+                {/* Left: QR Code */}
+                <div className="space-y-4">
+                  <div className="clay-card p-8 space-y-4">
+                    <h3 className="font-black text-slate-900 text-lg text-center flex items-center justify-center gap-2">
+                      <CreditCard className="w-5 h-5 text-cyan-500" />
+                      Mã QR Thanh Toán
+                    </h3>
+
+                    {qrUrl ? (
+                      <>
+                        <motion.div
+                          className="relative"
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className={`p-4 bg-white border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer ${isExpired ? "opacity-20 grayscale" : ""}`}>
+                            <img src={qrUrl} alt="QR thanh toán" className="w-full h-auto object-contain" />
+                          </div>
+                          {isExpired && (
+                            <motion.div
+                              className="absolute inset-0 flex items-center justify-center"
+                              initial={{ scale: 0, rotate: 0 }}
+                              animate={{ scale: 1, rotate: -12 }}
+                              transition={{ type: "spring", stiffness: 200 }}
+                            >
+                              <span className="bg-red-500 text-white font-black px-6 py-3 rounded-xl border-[3px] border-slate-900 shadow-[4px_4px_0px_0px_#1E293B] tracking-widest">
+                                HẾT HẠN
+                              </span>
+                            </motion.div>
+                          )}
+                        </motion.div>
+
+                        {!isExpired && (
+                          <motion.button
+                            onClick={handleDownloadQR}
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full py-3 bg-slate-100 border-[3px] border-slate-900 rounded-xl font-bold text-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all flex items-center justify-center gap-2"
+                          >
+                            <Download className="w-4 h-4" /> Tải mã QR
+                          </motion.button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center py-16">
+                        <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+                      </div>
                     )}
                   </div>
                 </div>
-              ))}
 
-              {/* Transfer content — most important */}
-              <div className="rounded-xl p-3" style={{ background: `${C.blurple}15`, border: `1px solid ${C.blurple}50` }}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: C.textMuted }}>Nội dung chuyển khoản</p>
-                    <p className="text-xl font-bold font-mono" style={{ color: C.blurple }}>{pluginCode}</p>
+                {/* Right: Bank / Transfer Info */}
+                <div className={`clay-card p-5 space-y-6 ${isExpired ? "opacity-30" : ""}`}>
+                  <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-cyan-500" />
+                    Thông Tin Chuyển Khoản
+                  </h3>
+
+                  <div className="space-y-4">
+                    <DetailRow label="Ngân hàng"     value={BANK.id}      />
+                    <DetailRow label="Chủ tài khoản" value={BANK.name}    />
+                    <DetailRow
+                      label="Số tài khoản"
+                      value={BANK.account}
+                      onCopy={() => handleCopy(BANK.account, "acc")}
+                      copied={copied === "acc"}
+                      isMono
+                    />
+
+                    <div className="border-t-2 border-dashed border-slate-200 pt-4">
+                      <DetailRow
+                        label="Nội dung CK"
+                        value={pluginCode ?? ""}
+                        highlight
+                        onCopy={() => handleCopy(pluginCode!, "code")}
+                        copied={copied === "code"}
+                        isMono
+                      />
+                      <div className="mt-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
+                        <p className="text-xs text-red-700 font-bold flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          Nhập chính xác nội dung để được cộng xu tự động
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={() => handleCopy(pluginCode!, "code")}
-                    className="flex items-center gap-1.5 py-2 px-3 rounded-lg font-semibold text-xs transition-colors text-white"
-                    style={{ background: copied === "code" ? C.green : C.blurple }}>
-                    {copied === "code" ? <><Check className="w-3.5 h-3.5" /> Đã copy</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
-                  </button>
+
+                  <div className="text-center pt-2">
+                    {isExpired ? (
+                      <div className="inline-flex items-center gap-2 text-red-600 font-bold">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-sm">Đơn hàng đã hết hạn. Tạo lại trong game!</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 text-slate-700 font-bold">
+                        <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
+                        <span className="text-sm">Đang chờ thanh toán...</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Warning */}
-              <div className="flex items-start gap-2 p-3 rounded-xl" style={{ background: `${C.yellow}15`, border: `1px solid ${C.yellow}40` }}>
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.yellow }} />
-                <p className="text-xs font-medium" style={{ color: C.yellow }}>
-                  Nhập <strong>ĐÚNG NỘI DUNG</strong> chuyển khoản để hệ thống tự động xác nhận!
-                </p>
+              {/* Amount Banner - Full width */}
+              <div className="clay-card p-6 bg-linear-to-br from-cyan-400 to-cyan-500 relative overflow-hidden max-w-[732px] mx-auto">
+                <div className="relative z-10 flex items-center justify-center gap-8">
+                  <div className="text-center">
+                    <div className="text-slate-900/60 text-xs font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
+                    <div className="text-4xl md:text-5xl font-black text-slate-900">{formattedAmount}</div>
+                  </div>
+
+                  {timeLeft !== null && (
+                    <div className="flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-3 rounded-full border-2 border-slate-900/10">
+                      <Clock className={`w-4 h-4 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
+                      <span className="text-xs font-bold text-slate-900/60">Hết hạn sau:</span>
+                      <span className="font-mono font-black text-slate-900 text-lg">{formatTime(timeLeft)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </motion.div>
 
-        {/* Waiting indicator */}
-        {pollStatus === "waiting" && (
-          <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-            <div className="relative">
-              <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: C.blurple, borderTopColor: "transparent" }} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm" style={{ color: C.textPrimary }}>Đang chờ xác nhận thanh toán...</p>
-              <p className="text-xs mt-0.5" style={{ color: C.textMuted }}>Hệ thống tự động kiểm tra mỗi 4 giây</p>
-            </div>
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <div className="clay-card inline-block px-6 py-3">
+            <p className="text-slate-500 text-xs font-mono">
+              Mã đơn hàng: <span className="text-slate-900 font-bold">{pluginCode}</span>
+            </p>
           </div>
-        )}
-
-        {/* Security badges */}
-        <div className="flex items-center justify-center gap-4 pt-2">
-          {[
-            { icon: <Shield className="w-3.5 h-3.5" />, label: "Bảo mật" },
-            { icon: <Zap className="w-3.5 h-3.5" />, label: "Tự động" },
-            { icon: <QrCode className="w-3.5 h-3.5" />, label: "VietQR" },
-          ].map(({ icon, label }) => (
-            <div key={label} className="flex items-center gap-1.5">
-              <span style={{ color: C.textMuted }}>{icon}</span>
-              <span className="text-xs" style={{ color: C.textMuted }}>{label}</span>
-            </div>
-          ))}
         </div>
 
         {loadErr && (
-          <p className="text-center text-xs" style={{ color: C.red }}>{loadErr}</p>
+          <p className="text-center text-sm text-red-500 mt-4 font-bold">{loadErr}</p>
         )}
       </div>
     </div>
@@ -377,8 +354,13 @@ function PayContent() {
 export default function MinecraftPayPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#23272a" }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#5865F2" }} />
+      <div className="min-h-screen bg-[#FFF9F5] flex items-center justify-center">
+        <div className="clay-card px-8 py-4">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
+            <span className="font-bold text-slate-900">Đang tải...</span>
+          </div>
+        </div>
       </div>
     }>
       <PayContent />
