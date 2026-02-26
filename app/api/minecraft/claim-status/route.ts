@@ -40,9 +40,15 @@ export async function GET(req: NextRequest) {
         createdAt: new Date(data.created_at).getTime(),
     };
 
-    // Pending: still waiting for payment
+    // Pending or expired: check timing
     if (data.status !== 'success') {
-        return NextResponse.json({ success: false, status: 'pending', ...responseMeta });
+        const ageMs = Date.now() - new Date(data.created_at).getTime();
+        const isExpired = ageMs > 10 * 60 * 1000;
+        return NextResponse.json({
+            success: false,
+            status: isExpired ? 'expired' : 'pending',
+            ...responseMeta
+        });
     }
 
     // Already has a claim code — just return it

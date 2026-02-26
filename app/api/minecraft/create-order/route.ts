@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         const accountName = process.env.BANK_ACCOUNT_NAME || 'GUMBALLZ HUB';
 
         const vietqrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-qr_only.png?amount=${amountNum}&addInfo=${encodeURIComponent(orderCode)}&accountName=${encodeURIComponent(accountName)}`;
-        const payPageUrl = `https://gumballzhub.vercel.app/minecraft/pay?code=${orderCode}&amount=${amountNum}&pkg=${encodeURIComponent(packageId)}`;
+        const payPageUrl = `https://gumballzhub.vercel.app/minecraft/pay?orderId=${data.id}&code=${orderCode}&amount=${amountNum}&pkg=${encodeURIComponent(packageId)}`;
 
         return NextResponse.json({
             success: true,

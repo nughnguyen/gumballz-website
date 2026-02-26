@@ -30,11 +30,8 @@ export async function POST(request: Request) {
              const amount = txn.amount || txn.transferAmount || 0;
              const bankTransId = txn.id || txn.transactionID || txn.referenceCode || `txn_${Date.now()}`;
              
-             // Extract Token from "GUMZXXXX", "KEYXXXX", "GZXXXX", or "MCXXXX"
-             let match = description.match(/(?:GUMZ|KEY|GZ|MC)\s*[:.\- ]*\s*([A-Za-z0-9]+)/i);
-             if (!match) {
-                 match = description.match(/(\d{6})/);
-             }
+             // Extract full order code: GZ..., MC..., GUM... (e.g. MC7XA3B2, GZAB3412)
+             const match = description.match(/\b((?:GZ|MC|GUM)[A-Z0-9]{4,10})\b/i);
 
              let token = match ? match[1] : null;
 
