@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Lock, Layout, RefreshCw } from "lucide-react";
+import { Save, Layout, RefreshCw } from "lucide-react";
+import { supabase } from "@/app/utils/supabaseClient";
 
 export default function ModConfigAdmin() {
-  const [secret, setSecret] = useState("");
   const [adminName, setAdminName] = useState("");
   const [configName, setConfigName] = useState("LQM Default");
   const [configData, setConfigData] = useState("");
@@ -47,14 +47,14 @@ export default function ModConfigAdmin() {
   };
 
   const handleSave = async () => {
-    if (!secret) return alert("Enter Admin Secret");
     setLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) throw new Error("Phiên đăng nhập hết hạn.");
       const res = await fetch("/api/mod-config", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session.access_token}` },
         body: JSON.stringify({
-          secret,
           admin_name: adminName,
           config_name: configName,
           config_data: configData
@@ -74,21 +74,20 @@ export default function ModConfigAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 p-8 text-white">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Layout className="text-blue-500" /> Mod Config Admin
           </h1>
         </div>
 
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6">
+        <div className="admin-panel p-6 md:p-8 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-400">Config Name</label>
               <div className="flex gap-2">
                 <input 
-                  type="text" 
+                  type="text"
                   value={configName}
                   onChange={(e) => setConfigName(e.target.value)}
                   className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 w-full focus:border-blue-500 outline-none" 
@@ -104,16 +103,15 @@ export default function ModConfigAdmin() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-400">Admin Secret</label>
+              <label className="text-sm font-medium text-slate-400">Admin session</label>
               <div className="relative">
-                <input 
-                  type="password" 
-                  value={secret}
-                  onChange={(e) => setSecret(e.target.value)}
+                <input
+                  type="text"
+                  value="Authenticated with Supabase"
+                  readOnly
                   placeholder="Nhập Secret Key..."
                   className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 w-full focus:border-blue-500 outline-none pl-10" 
                 />
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
               </div>
             </div>
 
@@ -174,6 +172,5 @@ export default function ModConfigAdmin() {
           )}
         </div>
       </div>
-    </div>
   );
 }

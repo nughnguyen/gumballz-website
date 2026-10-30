@@ -1,29 +1,30 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/app/utils/adminAuth";
 
 export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 function generateKey(prefix: string): string {
   const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+  const random = crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase();
   return `${prefix}-${timestamp}${random}`;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await requireAdmin(request))) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!supabase) return NextResponse.json({ success: false, error: 'Server is not configured' }, { status: 503 });
     const body = await request.json();
-    const { durationDays, type = 'PREMIUM', customKey, adminSecret, maxDevices = 1 } = body;
+    const { durationDays, type = 'PREMIUM', customKey, maxDevices = 1 } = body;
 
     // Simple security check (replace with real auth in production)
-    if (adminSecret !== process.env.API_SECRET_KEY && adminSecret !== 'gumballz_admin_2025') {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!['FREE', 'PREMIUM'].includes(type) || !Number.isInteger(Number(durationDays)) || Number(durationDays) < 1 || Number(durationDays) > 3650 || !Number.isInteger(Number(maxDevices)) || Number(maxDevices) < 1 || Number(maxDevices) > 20 || (customKey && (typeof customKey !== 'string' || !/^[A-Za-z0-9-]{6,80}$/.test(customKey)))) return NextResponse.json({ success: false, error: 'Invalid key settings' }, { status: 400 });
 
     const prefix = type === 'FREE' ? 'GUMFREE' : 'GUMBALLZ';
     const keyValue = customKey || generateKey(prefix);

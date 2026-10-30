@@ -1,18 +1,26 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Copy, Check, ShieldCheck, Loader2, Clock, AlertCircle,
-  CreditCard, Download, CheckCircle2, ArrowLeft, Coins
+  CreditCard, Download, CheckCircle2, ArrowLeft, Coins, ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 
 const BANK = {
-  id:      process.env.NEXT_PUBLIC_BANK_ID      || "OCB",
-  account: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO   || "",
-  name:    process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "NGUYEN QUOC HUNG",
+  id: "",
+  account: "",
+  name: "",
+};
+
+type ClaimStatusResponse = {
+  createdAt?: number;
+  serverTime?: number;
+  status?: string;
+  success?: boolean;
+  claimCode?: string | null;
 };
 
 function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = false }: {
@@ -50,12 +58,39 @@ function PayContent() {
   const [copied,     setCopied]     = useState("");
   const [loadErr,    setLoadErr]    = useState("");
   const [firstFetchDone, setFirstFetchDone] = useState(false);
+  const [bank, setBank] = useState(BANK);
+  const [payosUrl, setPayosUrl] = useState("");
+  const [payosError, setPayosError] = useState("");
+  const [manualReviewRequested, setManualReviewRequested] = useState(false);
+  const [manualReviewBusy, setManualReviewBusy] = useState(false);
+  const [manualReviewMessage, setManualReviewMessage] = useState("");
+
+  useEffect(() => {
+    if (!orderId) return;
+    fetch(`/api/payment-details?orderId=${encodeURIComponent(orderId)}`, { cache: "no-store" })
+      .then((res) => res.json()).then((data) => { if (data.success && data.banks[0]) setBank(data.banks[0]); })
+      .catch(() => undefined);
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!orderId || !pluginCode) return;
+    fetch("/api/payment/create-payos-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId: orderId, content: pluginCode }),
+      cache: "no-store",
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "Không tạo được liên kết payOS.");
+      if (data.payable && typeof data.checkoutUrl === "string") setPayosUrl(data.checkoutUrl);
+    }).catch((error: unknown) => setPayosError(error instanceof Error ? error.message : "payOS hiện chưa sẵn sàng."));
+  }, [orderId, pluginCode]);
 
   const amtNum = pluginAmount ? parseInt(pluginAmount) : 0;
   const formattedAmount = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amtNum);
 
   const qrUrl = pluginCode && pluginAmount
-    ? `https://img.vietqr.io/image/${BANK.id.toLowerCase()}-${BANK.account}-qr_only.png?amount=${pluginAmount}&addInfo=${pluginCode}&accountName=${encodeURIComponent(BANK.name)}`
+    ? `https://img.vietqr.io/image/${bank.id.toLowerCase()}-${bank.account}-qr_only.png?amount=${pluginAmount}&addInfo=${pluginCode}&accountName=${encodeURIComponent(bank.name)}`
     : null;
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -63,6 +98,27 @@ function PayContent() {
     navigator.clipboard.writeText(text);
     setCopied(key);
     setTimeout(() => setCopied(""), 2000);
+  };
+
+  const requestManualReview = async () => {
+    if (!orderId || !pluginCode) return;
+    setManualReviewBusy(true);
+    setManualReviewMessage("");
+    try {
+      const response = await fetch("/api/payment/manual-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId: orderId, content: pluginCode }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "Không gửi được yêu cầu duyệt.");
+      setManualReviewRequested(true);
+      setManualReviewMessage("Đã gửi yêu cầu. Admin sẽ kiểm tra giao dịch trước khi cấp mã nhận xu.");
+    } catch (error) {
+      setManualReviewMessage(error instanceof Error ? error.message : "Không gửi được yêu cầu duyệt.");
+    } finally {
+      setManualReviewBusy(false);
+    }
   };
   const handleDownloadQR = async () => {
     if (!qrUrl) return;
@@ -78,7 +134,7 @@ function PayContent() {
   };
 
   // ── process API response ────────────────────────────────────────
-  function processResponse(d: any) {
+  function processResponse(d: ClaimStatusResponse) {
     if (d.createdAt && d.serverTime) {
       const expiryMs = d.createdAt + 10 * 60 * 1000;
       const nowMs    = Date.now() + (d.serverTime - Date.now());
@@ -108,7 +164,6 @@ function PayContent() {
     if (!firstFetchDone || pollStatus !== "waiting" || timeLeft === null || timeLeft <= 0) return;
     const t = setTimeout(() => setTimeLeft(p => (!p || p <= 1) ? (setPollStatus("expired"), 0) : p - 1), 1000);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstFetchDone, timeLeft, pollStatus]);
 
   // ── Poll every 4 s ─────────────────────────────────────────────────
@@ -266,13 +321,15 @@ function PayContent() {
                     Thông Tin Chuyển Khoản
                   </h3>
 
+                  {payosUrl && <div className="border-[3px] border-slate-900 bg-[#ffe600] p-4 shadow-[4px_4px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><p className="mt-1 text-xs font-semibold">PayOS hỗ trợ chuyển khoản Napas 24/7 và tự xác nhận.</p><button type="button" onClick={() => location.assign(payosUrl)} className="clay-button mt-3 w-full">Mở payOS để thanh toán <ExternalLink size={15}/></button></div>}
+                  {payosError && <p role="status" className="border-2 border-amber-600 bg-amber-50 p-3 text-xs font-bold">{payosError} Bạn vẫn có thể dùng thông tin chuyển khoản bên dưới.</p>}
                   <div className="space-y-4">
-                    <DetailRow label="Ngân hàng"     value={BANK.id}      />
-                    <DetailRow label="Chủ tài khoản" value={BANK.name}    />
+                    <DetailRow label="Ngân hàng"     value={bank.id}      />
+                    <DetailRow label="Chủ tài khoản" value={bank.name}    />
                     <DetailRow
                       label="Số tài khoản"
-                      value={BANK.account}
-                      onCopy={() => handleCopy(BANK.account, "acc")}
+                      value={bank.account}
+                      onCopy={() => handleCopy(bank.account, "acc")}
                       copied={copied === "acc"}
                       isMono
                     />
@@ -293,6 +350,9 @@ function PayContent() {
                         </p>
                       </div>
                     </div>
+
+                    {manualReviewRequested ? <p role="status" className="border-[3px] border-slate-900 bg-amber-100 p-3 text-sm font-bold">Đang chờ Admin duyệt. Mã nhận xu sẽ xuất hiện sau khi thanh toán được xác nhận.</p> : <button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản ngân hàng khác — nhờ Admin duyệt"}</button>}
+                    {manualReviewMessage && <p role="status" className="text-xs font-bold">{manualReviewMessage}</p>}
                   </div>
 
                   <div className="text-center pt-2">

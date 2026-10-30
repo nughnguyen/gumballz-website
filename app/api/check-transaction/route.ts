@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
 import { generateModKey, generateRobloxKey } from '@/app/lib/key-generator';
+import { checkRateLimit, rateLimitResponse } from '@/app/utils/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+    const rate = await checkRateLimit(request, 'check-transaction', 40, 60);
+    if (!rate.allowed) return rateLimitResponse(rate);
     const { searchParams } = new URL(request.url);
     const txId = searchParams.get('id');
     const content = searchParams.get('content');
@@ -77,5 +80,9 @@ export async function GET(request: Request) {
         });
     }
     
-    return NextResponse.json({ success: false, status: transaction.status });
+    return NextResponse.json({
+        success: false,
+        status: transaction.status,
+        manualReviewRequested: transaction.metadata?.manual_review_requested === true,
+    });
 }

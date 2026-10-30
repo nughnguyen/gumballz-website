@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
+import { checkRateLimit, rateLimitResponse } from '@/app/utils/rateLimit';
 
 function generateClaimCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -11,6 +12,8 @@ function generateClaimCode(): string {
 // GET /api/minecraft/claim-status?orderId=xxx
 // Website polls this to know if payment was detected
 export async function GET(req: NextRequest) {
+    const rate = await checkRateLimit(req, 'minecraft-claim-status', 40, 60);
+    if (!rate.allowed) return rateLimitResponse(rate);
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get('orderId');
     const code = searchParams.get('code');

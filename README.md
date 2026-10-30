@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GumballZ Hub
 
-## Getting Started
+Next.js storefront for digital tools, license keys and Coiz, with Supabase-backed products, purchases, key status and admin tools.
 
-First, run the development server:
+## Local development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```powershell
+npm.cmd install
+npm.cmd run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Main routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` — Neo-Brutalist home, category links, featured products and quick key lookup.
+- `/store` — searchable and filterable tool/key/Coiz catalog.
+- `/store/coiz` — existing Coiz and Minecraft top-up flow.
+- `/keys` — free and premium keys plus status lookup.
+- `/docs` — searchable-by-section product and activation guides.
+- `/admin` — allowlisted administrator dashboard.
 
-## Learn More
+`/tools` redirects to `/store?category=tool` for existing bookmarks.
 
-To learn more about Next.js, take a look at the following resources:
+## Fresh Supabase setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create an empty Supabase project. Remove old tables yourself if you are replacing an existing database.
+2. Run `supabase_all_in_one.sql` once in Supabase SQL Editor. It combines the current schema, products, wallet, rate limits and restrictive RLS setup. It does not drop tables or application data. The older individual SQL files are retained for reference; do not run them separately after this bundle.
+3. Fill `vercel.env.template` with your own values, then add those variables to Vercel. Set `ADMIN_EMAILS` to the comma-separated allowlist of existing Supabase Auth users.
+4. Keep `SUPABASE_SERVICE_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) and payment/provider secrets on the server. Never expose them with a `NEXT_PUBLIC_` prefix.
+5. Rotate the previously committed Yeulink token and configure the replacement as `YEULINK_TOKEN`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Wallet payment webhooks
 
-## Deploy on Vercel
+- Configure payOS with the webhook URL `https://<your-domain>/api/webhook/payos`. Set the server-only `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, and `PAYOS_CHECKSUM_KEY` from your payOS payment channel. The app creates signed payment links and verifies the signed webhook before matching the order amount and settling the transaction.
+- For SePay, configure HMAC-SHA256 and set `SEPAY_WEBHOOK_SECRET` (recommended). If HMAC is not configured, set `SEPAY_API_KEY` to the exact key configured on the webhook. At least one must be configured.
+- If MoMo IPN is enabled, set `MOMO_ACCESS_KEY` and `MOMO_SECRET_KEY`; the webhook rejects callbacks without a valid MoMo HMAC-SHA256 signature.
+- Set `VNPAY_HASH_SECRET` to the VNPay checksum secret if VNPay IPN is enabled.
+- Wallet top-ups are credited only after a verified incoming payment matches the requested amount; the ledger trigger prevents duplicate credits.
+- If a customer pays from a bank that is not connected to automatic confirmation, they can submit a manual review request on the payment page. The request appears in Admin → Dashboard; verify the incoming bank statement before approving. Approval triggers the normal purchase/key or wallet-credit flow, and the signed-in customer sees the pending/review result in `/account`.
+- Configure `CRON_SECRET` in the hosting environment and call `/api/cron/cleanup` with `Authorization: Bearer <CRON_SECRET>`. Expired pending orders are marked expired and kept for transaction history.
+- API rate limits use hashed client IPs in Supabase and return `429` with a `Retry-After` header when a limit is reached. Make sure the deployed platform provides a trusted `x-real-ip` or `x-forwarded-for` header. The cleanup endpoint removes rate-limit buckets older than three days.
+- Minecraft plugin requests to `/api/minecraft/check-order` must send `x-api-key` (or `Authorization: Bearer ...`); API keys are not accepted in query strings.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The older individual SQL files are kept for reference; use `supabase_all_in_one.sql` for the current consolidated setup. Review `SECURITY_AUDIT.md` before deployment, especially provider webhook verification and transaction ownership checks.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Useful scripts
+
+```powershell
+npm.cmd run lint
+npm.cmd run build
+```

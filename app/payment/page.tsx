@@ -18,16 +18,16 @@ import {
 import Link from 'next/link';
 
 const BANK_1 = {
-  id: process.env.NEXT_PUBLIC_BANK_ID || "OCB",
-  account: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO || "0388205003",
-  name: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "NGUYEN QUOC HUNG",
+  id: "",
+  account: "",
+  name: "",
   icon: "🏦"
 };
 
 const BANK_2 = {
-  id: process.env.NEXT_PUBLIC_BANK_ID_2,
-  account: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO_2,
-  name: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME_2,
+  id: "",
+  account: "",
+  name: "",
   icon: "🏦"
 };
 
@@ -36,7 +36,7 @@ if (BANK_2.id && BANK_2.account) {
   BANKS.push(BANK_2 as typeof BANK_1);
 }
 
-const MOMO_PHONE = process.env.NEXT_PUBLIC_MOMO_PHONE || "0388205003";
+const MOMO_PHONE = "";
 
 function PaymentCard() {
   const searchParams = useSearchParams();
@@ -52,6 +52,49 @@ function PaymentCard() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const [selectedBank, setSelectedBank] = useState(BANK_1);
+  const [banks, setBanks] = useState<typeof BANK_1[]>(BANKS);
+  const [momoPhone, setMomoPhone] = useState(MOMO_PHONE);
+  const [manualReviewRequested, setManualReviewRequested] = useState(false);
+  const [manualReviewBusy, setManualReviewBusy] = useState(false);
+  const [manualReviewMessage, setManualReviewMessage] = useState("");
+  const [payosCheckoutUrl, setPayosCheckoutUrl] = useState("");
+  const [payosLoading, setPayosLoading] = useState(false);
+  const [payosError, setPayosError] = useState("");
+
+  useEffect(() => {
+    if (!txId) return;
+    fetch(`/api/payment-details?id=${encodeURIComponent(txId)}`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) return;
+        const available = data.banks.map((bank: { id: string; account: string; name: string }) => ({ ...bank, icon: "🏦" }));
+        setBanks(available);
+        if (available[0]) setSelectedBank(available[0]);
+        setMomoPhone(data.momoPhone || "");
+      }).catch(() => undefined);
+  }, [txId]);
+
+  useEffect(() => {
+    if (!txId || method !== "Banking") return;
+    let active = true;
+    setPayosLoading(true);
+    fetch("/api/payment/create-payos-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId: txId, content }),
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || "Chưa tạo được thanh toán payOS.");
+        if (active && data.payable && typeof data.checkoutUrl === "string") setPayosCheckoutUrl(data.checkoutUrl);
+      })
+      .catch((error: unknown) => {
+        if (active) setPayosError(error instanceof Error ? error.message : "payOS hiện chưa sẵn sàng.");
+      })
+      .finally(() => { if (active) setPayosLoading(false); });
+    return () => { active = false; };
+  }, [txId, content, method]);
 
   // Persistence check on mount
   useEffect(() => {
@@ -67,6 +110,7 @@ function PaymentCard() {
             } else if (data.status === 'expired') {
                 setIsExpired(true);
             }
+            if (data.manualReviewRequested) setManualReviewRequested(true);
         } catch (e) {
             console.error("Initial check error:", e);
         }
@@ -76,11 +120,10 @@ function PaymentCard() {
 
   useEffect(() => {
     const providerParam = searchParams.get("provider");
-    if (providerParam === "sepay" && BANKS.length > 1) {
-        const sepayBank = BANKS.find(b => b.id === BANK_2.id && b.account === BANK_2.account);
-        if (sepayBank) setSelectedBank(sepayBank);
+    if (providerParam === "sepay" && banks.length > 1) {
+        setSelectedBank(banks[1]);
     }
-  }, [searchParams]);
+  }, [searchParams, banks]);
 
   const amountNum = parseInt(amount);
   const formattedAmount = new Intl.NumberFormat("vi-VN", {
@@ -90,7 +133,7 @@ function PaymentCard() {
 
   const qrUrl =
     method === "Momo"
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|${MOMO_PHONE}|${selectedBank.name}|0|0|0|${amountNum}|${content}|transfer_myqr`
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|${momoPhone}|${selectedBank.name}|0|0|0|${amountNum}|${content}|transfer_myqr`
       : `https://img.vietqr.io/image/${selectedBank.id.toLowerCase()}-${selectedBank.account}-qr_only.png?amount=${amount}&addInfo=${content}&accountName=${encodeURIComponent(selectedBank.name)}`;
 
   const handleCopy = (text: string, field: string) => {
@@ -145,6 +188,8 @@ function PaymentCard() {
           setStatus("success");
           if (data.key) setGeneratedKey(data.key);
           clearInterval(interval);
+        } else if (data.manualReviewRequested) {
+          setManualReviewRequested(true);
         }
       } catch (e) { console.error(e); }
     }, 3000);
@@ -156,6 +201,27 @@ function PaymentCard() {
     const s = seconds % 60;
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
+
+  async function requestManualReview() {
+    if (!txId) return;
+    setManualReviewBusy(true);
+    setManualReviewMessage("");
+    try {
+      const response = await fetch("/api/payment/manual-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId: txId, content }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "Không gửi được yêu cầu duyệt.");
+      setManualReviewRequested(true);
+      setManualReviewMessage("Đã gửi yêu cầu. Admin sẽ kiểm tra sao kê và cập nhật đơn trong tài khoản của bạn.");
+    } catch (error) {
+      setManualReviewMessage(error instanceof Error ? error.message : "Không gửi được yêu cầu. Vui lòng thử lại.");
+    } finally {
+      setManualReviewBusy(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#FFF9F5] pt-28 pb-20 px-6">
@@ -263,6 +329,10 @@ function PaymentCard() {
                   Thông Tin Chuyển Khoản
                 </h3>
 
+                {payosCheckoutUrl && <div className="border-[3px] border-slate-900 bg-[#ffe600] p-4 shadow-[4px_4px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><p className="mt-1 text-xs font-semibold">PayOS hỗ trợ chuyển khoản Napas 24/7 và tự xác nhận giao dịch.</p><button type="button" onClick={() => location.assign(payosCheckoutUrl)} className="clay-button mt-3 w-full">Mở trang thanh toán payOS <ExternalLink size={16}/></button></div>}
+                {payosLoading && <p className="text-xs font-semibold text-slate-500">Đang kết nối payOS…</p>}
+                {payosError && <p role="status" className="border-2 border-amber-600 bg-amber-50 p-3 text-xs font-bold">{payosError} Bạn vẫn có thể chuyển khoản theo thông tin bên dưới.</p>}
+
                 <div className="space-y-4">
                   <DetailRow label="Ngân hàng" value={selectedBank.id} />
                   <DetailRow label="Chủ tài khoản" value={selectedBank.name} />
@@ -285,7 +355,7 @@ function PaymentCard() {
                     <div className="mt-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
                       <p className="text-xs text-red-700 font-bold flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
-                        Nhập chính xác nội dung để được cộng Coiz tự động
+                        Nhập chính xác nội dung để hệ thống đối chiếu và xử lý đúng đơn hàng sau khi xác nhận thanh toán.
                       </p>
                     </div>
                   </div>
@@ -297,6 +367,12 @@ function PaymentCard() {
                     <span className="text-sm">Đang chờ thanh toán...</span>
                   </div>
                 </div>
+
+                {txId && method === "Banking" && !status.startsWith("success") && <div className="border-t-2 border-dashed border-slate-300 pt-4">
+                  {manualReviewRequested ? <div role="status" aria-live="polite" className="border-[3px] border-slate-900 bg-amber-100 p-4 shadow-[3px_3px_0_#1e293b]"><p className="font-black">Đang chờ Admin duyệt</p><p className="mt-1 text-sm font-semibold">Yêu cầu thanh toán của bạn đã được gửi. Đơn sẽ được xử lý sau khi Admin đối chiếu sao kê.</p></div> : <><p className="text-sm font-semibold leading-6 text-slate-600">Chuyển khoản từ ngân hàng chưa hỗ trợ tự động? Sau khi chuyển tiền, hãy gửi yêu cầu để Admin kiểm tra thủ công.</p><button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button mt-3 w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Tôi đã chuyển khoản — yêu cầu Admin duyệt"}</button></>}
+                  {manualReviewMessage && <p role="status" className="mt-2 text-sm font-bold">{manualReviewMessage}</p>}
+                  {manualReviewRequested && <Link href="/account" className="mt-3 inline-flex items-center gap-1 text-sm font-black underline">Theo dõi trong tài khoản <ExternalLink size={14}/></Link>}
+                </div>}
               </div>
             )}
           </div>
@@ -337,7 +413,14 @@ function PaymentCard() {
   );
 }
 
-function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = false }: any) {
+function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = false }: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  onCopy?: () => void;
+  copied?: boolean;
+  isMono?: boolean;
+}) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">

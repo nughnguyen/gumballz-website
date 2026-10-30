@@ -1,143 +1,19 @@
-import { ShieldCheck, Lock, Database, Eye } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Database, Eye, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
+
+const sections = [
+  { icon: Database, title: "Dữ liệu chúng tôi xử lý", tone: "bg-[#00d9f5]", body: "Tùy cách bạn sử dụng Hub, dữ liệu có thể gồm thông tin tài khoản do bạn cung cấp, mã đơn và trạng thái thanh toán, sản phẩm hoặc license đã mua, cùng thông tin cần thiết để hỗ trợ giao dịch. Thông tin thanh toán được xử lý qua phương thức thanh toán bạn chọn." },
+  { icon: Eye, title: "Cách sử dụng dữ liệu", tone: "bg-[#ffe600]", body: "Dữ liệu được dùng để đăng nhập, tạo và tra cứu đơn hàng, giao sản phẩm số hoặc key, ngăn giao dịch sai lệch và phản hồi yêu cầu hỗ trợ. Chúng tôi không bán dữ liệu cá nhân của bạn." },
+  { icon: LockKeyhole, title: "Lưu trữ và chia sẻ", tone: "bg-[#ff3d93]", body: "Dữ liệu được lưu trong các dịch vụ cần thiết để vận hành website, chẳng hạn hạ tầng Supabase, và chỉ chia sẻ với nhà cung cấp thanh toán hoặc lưu trữ khi cần hoàn tất dịch vụ. Mỗi nhà cung cấp có chính sách riêng của họ." },
+  { icon: UserRound, title: "Quyền của bạn", tone: "bg-[#50f080]", body: "Bạn có thể yêu cầu xem, sửa hoặc xóa dữ liệu gắn với tài khoản, tùy theo nghĩa vụ lưu trữ giao dịch và yêu cầu pháp luật. Hãy liên hệ chúng tôi từ email gắn với tài khoản để xác minh yêu cầu." },
+];
 
 export default function PrivacyPage() {
-  return (
-    <div className="min-h-screen bg-[#FFF9F5]">
-      <div className="container mx-auto px-6 pt-28 pb-20 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-12 space-y-4">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-100 border-[3px] border-slate-900 rounded-full shadow-[3px_3px_0px_0px_#1E293B] font-bold text-sm">
-            <ShieldCheck className="w-4 h-4 text-cyan-600" />
-            <span className="text-slate-900">Privacy Policy</span>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">
-            Chính Sách <span className="text-cyan-500">Bảo Mật</span>
-          </h1>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto font-medium">
-            Cam kết bảo vệ thông tin cá nhân của bạn
-          </p>
-        </div>
-
-        {/* Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Card 1: Thu thập thông tin */}
-          <div className="clay-card p-8 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-cyan-100 border-[3px] border-slate-900 rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#1E293B]">
-                <Database className="w-6 h-6 text-cyan-600" />
-              </div>
-              <h2 className="text-2xl font-black text-slate-900">Thu thập thông tin</h2>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Để thực hiện giao dịch, chúng tôi chỉ thu thập và lưu trữ các thông tin cần thiết tối thiểu:
-            </p>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-slate-700">
-                <div className="w-6 h-6 bg-cyan-500 border-2 border-slate-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">✓</span>
-                </div>
-                <div>
-                  <strong className="text-slate-900">Discord ID:</strong> Để xác định tài khoản nhận Coiz.
-                </div>
-              </li>
-              <li className="flex items-start gap-3 text-slate-700">
-                <div className="w-6 h-6 bg-cyan-500 border-2 border-slate-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">✓</span>
-                </div>
-                <div>
-                  <strong className="text-slate-900">Mã giao dịch:</strong> Để đối soát và xử lý nạp tiền tự động.
-                </div>
-              </li>
-              <li className="flex items-start gap-3 text-slate-700">
-                <div className="w-6 h-6 bg-cyan-500 border-2 border-slate-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">✓</span>
-                </div>
-                <div>
-                  <strong className="text-slate-900">Lịch sử nạp:</strong> Thời gian và số tiền để tra cứu.
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* Card 2: Sử dụng thông tin */}
-          <div className="clay-card p-8 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-purple-100 border-[3px] border-slate-900 rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#1E293B]">
-                <Eye className="w-6 h-6 text-purple-600" />
-              </div>
-              <h2 className="text-2xl font-black text-slate-900">Sử dụng thông tin</h2>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Thông tin của bạn chỉ được sử dụng cho mục đích duy nhất là xử lý giao dịch nạp Coiz vào hệ thống Bot Discord.
-            </p>
-            <div className="p-5 bg-red-50 border-[3px] border-red-300 rounded-2xl">
-              <p className="text-red-800 font-bold text-sm leading-relaxed">
-                ⚠️ Chúng tôi <span className="underline">tuyệt đối không</span> chia sẻ, bán hoặc trao đổi thông tin cá nhân với bất kỳ bên thứ ba nào.
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: Bảo mật dữ liệu */}
-          <div className="clay-card p-8 space-y-4 bg-gradient-to-br from-cyan-50 to-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-cyan-500 border-[3px] border-slate-900 rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#1E293B]">
-                <Lock className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-slate-900">Bảo mật dữ liệu</h2>
-            </div>
-            <p className="text-slate-700 leading-relaxed font-medium">
-              Mọi dữ liệu giao dịch đều được <strong>mã hóa</strong> và lưu trữ an toàn trên hệ thống cơ sở dữ liệu của Supabase. Chúng tôi áp dụng các biện pháp kỹ thuật để ngăn chặn truy cập trái phép.
-            </p>
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="text-center p-4 bg-white border-[3px] border-slate-900 rounded-xl shadow-[2px_2px_0px_0px_#1E293B]">
-                <div className="text-3xl font-black text-cyan-500">256-bit</div>
-                <div className="text-sm text-slate-600 font-bold mt-1">Mã hóa SSL</div>
-              </div>
-              <div className="text-center p-4 bg-white border-[3px] border-slate-900 rounded-xl shadow-[2px_2px_0px_0px_#1E293B]">
-                <div className="text-3xl font-black text-cyan-500">24/7</div>
-                <div className="text-sm text-slate-600 font-bold mt-1">Giám sát bảo mật</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 4: Quyền của người dùng */}
-          <div className="clay-card p-8 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-green-100 border-[3px] border-slate-900 rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#1E293B]">
-                <ShieldCheck className="w-6 h-6 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-black text-slate-900">Quyền của bạn</h2>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Bạn có quyền yêu cầu chúng tôi cung cấp thông tin về lịch sử giao dịch hoặc yêu cầu xóa dữ liệu cá nhân bằng cách liên hệ với quản trị viên.
-            </p>
-            <div className="space-y-3 mt-4">
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-slate-700 font-medium text-sm">Truy cập dữ liệu của bạn</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-slate-700 font-medium text-sm">Sửa đổi thông tin</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-slate-700 font-medium text-sm">Yêu cầu xóa dữ liệu</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Note */}
-        <div className="mt-12 text-center">
-          <div className="clay-card inline-block px-8 py-4">
-            <p className="text-slate-500 text-sm font-bold">
-              📅 Hiệu lực từ: <span className="text-slate-900">15/12/2025</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <main className="min-h-screen bg-[#fffdf5] px-5 pb-20 pt-32 text-[#111217] md:px-10"><div className="mx-auto max-w-6xl">
+    <header className="border-b-[3px] border-black pb-8"><span className="neo-badge"><ShieldCheck size={15}/> PRIVACY / DATA</span><h1 className="mt-5 max-w-4xl text-4xl font-black uppercase leading-none tracking-[-.05em] sm:text-5xl md:text-6xl">Chính sách <span className="bg-[#00d9f5] px-2">quyền riêng tư</span></h1><p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-slate-700">Thông tin nào được dùng để vận hành GumballZ Hub, vì sao cần dùng và cách bạn có thể gửi yêu cầu về dữ liệu.</p><p className="mt-4 text-xs font-bold text-slate-500">Cập nhật lần cuối: 30/10/2026</p></header>
+    <section className="mt-8 grid gap-5 md:grid-cols-2">{sections.map(({icon:Icon,title,tone,body},i)=><article key={title} className="neo-card bg-white p-6 sm:p-8"><div className="flex items-center gap-4"><span className={`grid size-12 place-items-center border-[3px] border-black ${tone} shadow-[3px_3px_0_#111217]`}><Icon size={21}/></span><span className="font-mono text-xs font-black">0{i+1}</span></div><h2 className="mt-6 text-2xl font-black">{title}</h2><p className="mt-3 text-sm font-medium leading-7 text-slate-700">{body}</p></article>)}</section>
+    <section className="neo-card mt-6 bg-[#fff2a8] p-6 sm:p-8"><h2 className="text-xl font-black">Cookie và dịch vụ bên ngoài</h2><p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-700">Website có thể dùng cookie hoặc bộ nhớ trình duyệt để duy trì phiên đăng nhập. Các liên kết tới Discord, GitHub và cổng thanh toán mở dịch vụ của bên thứ ba; khi rời website, chính sách của dịch vụ đó sẽ áp dụng.</p></section>
+    <section className="mt-6 flex flex-col gap-4 border-[3px] border-black bg-white p-6 shadow-[5px_5px_0_#111217] sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-xl font-black">Cần gửi yêu cầu về dữ liệu?</h2><p className="mt-1 text-sm font-semibold text-slate-700">Liên hệ qua email hỗ trợ và mô tả tài khoản hoặc giao dịch liên quan.</p></div><a href="mailto:contact.gumballz@gmail.com" className="neo-button w-fit"><Mail size={16}/> Liên hệ hỗ trợ</a></section>
+    <p className="mt-8 text-sm font-semibold text-slate-600">Xem thêm <Link href="/terms" className="font-black underline underline-offset-4">Điều khoản dịch vụ <ArrowRight className="inline" size={14}/></Link>.</p>
+  </div></main>;
 }

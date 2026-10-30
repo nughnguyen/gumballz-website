@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, HardDrive, Tag, Package } from "lucide-react";
+import { Download, HardDrive, Tag, Package, LockKeyhole } from "lucide-react";
 
 interface DownloadItem {
   id: number;
   title: string;
   description: string;
   image_url: string;
-  download_url: string;
   version: string;
   file_size: string;
 }
@@ -100,7 +99,7 @@ export default function DownloadsPage() {
                  </p>
 
                  <a 
-                    href={item.download_url} 
+                    href="/tools"
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-full bg-cyan-500 text-white font-bold py-3 rounded-xl border-[3px] border-slate-900 shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px flex items-center justify-center gap-2 transition-all"

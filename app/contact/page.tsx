@@ -1,50 +1,17 @@
-"use client";
+import Link from "next/link";
+import { ArrowRight, BookOpen, CircleHelp, CreditCard, Mail, MessageCircle, PackageCheck } from "lucide-react";
 
-import { Mail, MessageCircle, MapPin } from "lucide-react";
+const topics = [
+  { icon: CreditCard, title: "Thanh toán và đơn hàng", text: "Chuẩn bị mã đơn, số tiền và thời điểm chuyển khoản để đội ngũ dễ đối soát.", href: "/account", label: "Mở tài khoản", color: "bg-[#ffe600]" },
+  { icon: PackageCheck, title: "Sản phẩm và license", text: "Gửi tên sản phẩm, loại key và mô tả lỗi. Đừng gửi key đầy đủ ở nơi công khai.", href: "/keys", label: "Quản lý key", color: "bg-[#ff3d93]" },
+  { icon: BookOpen, title: "Hướng dẫn sử dụng", text: "Xem hướng dẫn cài đặt, kích hoạt key và sử dụng GumballZPay.", href: "/docs", label: "Mở tài liệu", color: "bg-[#00d9f5]" },
+];
 
 export default function ContactPage() {
-  return (
-    <div className="min-h-screen bg-slate-50 pt-16 pb-20 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-           <h1 className="text-3xl font-bold text-slate-900">Liên Hệ Hỗ Trợ</h1>
-           <p className="text-slate-500">Chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                    <MessageCircle className="w-5 h-5" />
-                </div>
-                <div>
-                    <h3 className="font-bold text-slate-800">Discord Support</h3>
-                    <p className="text-sm text-slate-500 mt-1">Tham gia server Discord của chúng tôi để được hỗ trợ trực tiếp từ đội ngũ Admin.</p>
-                </div>
-                <a href="#" className="inline-block text-blue-600 font-medium hover:underline text-sm">Tham gia ngay &rarr;</a>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
-                    <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                    <h3 className="font-bold text-slate-800">Email</h3>
-                    <p className="text-sm text-slate-500 mt-1">Gửi email cho chúng tôi nếu bạn có vấn đề về thanh toán hoặc hợp tác.</p>
-                </div>
-                <a href="mailto:hungn@example.com" className="inline-block text-indigo-600 font-medium hover:underline text-sm">nugh@gmail.com</a>
-            </div>
-        </div>
-
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center space-y-4">
-             <div className="inline-flex w-12 h-12 bg-slate-100 rounded-full items-center justify-center text-slate-600">
-                 <MapPin className="w-6 h-6" />
-             </div>
-             <h3 className="font-bold text-slate-800">Thông tin bổ sung</h3>
-             <p className="text-slate-500 text-sm max-w-lg mx-auto">
-                 GumballZ Payment Gateway là một dự án phi lợi nhuận phục vụ cộng đồng. Mọi khoản đóng góp đều được sử dụng để duy trì Server và phát triển Bot.
-             </p>
-        </div>
-      </div>
-    </div>
-  );
+  return <main className="min-h-screen bg-[#fffdf5] px-5 pb-20 pt-32 text-[#111217] md:px-10"><div className="mx-auto max-w-6xl">
+    <header className="border-b-[3px] border-black pb-8"><span className="neo-badge bg-[#50f080]"><MessageCircle size={15}/> CONTACT / SUPPORT</span><h1 className="mt-5 max-w-4xl text-4xl font-black uppercase leading-none tracking-[-.05em] sm:text-5xl md:text-6xl">Cần hỗ trợ? <span className="bg-[#ffe600] px-2">Bắt đầu tại đây.</span></h1><p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-slate-700">Chọn đúng chủ đề hoặc gửi email cho đội ngũ GumballZ Hub. Với vấn đề đơn hàng, hãy kèm mã giao dịch để chúng tôi kiểm tra nhanh hơn.</p></header>
+    <section className="mt-8 grid gap-5 md:grid-cols-3">{topics.map(({icon:Icon,title,text,href,label,color})=><article key={title} className="neo-card flex min-h-64 flex-col bg-white p-6"><span className={`grid size-12 place-items-center border-[3px] border-black ${color} shadow-[3px_3px_0_#111217]`}><Icon size={21}/></span><h2 className="mt-5 text-xl font-black">{title}</h2><p className="mt-2 text-sm font-medium leading-6 text-slate-700">{text}</p><Link href={href} className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-black underline underline-offset-4">{label}<ArrowRight size={16}/></Link></article>)}</section>
+    <section className="neo-card mt-7 grid gap-6 bg-[#dffbff] p-6 sm:p-8 md:grid-cols-[1fr_auto] md:items-center"><div><div className="flex items-center gap-3"><span className="grid size-11 place-items-center border-2 border-black bg-white shadow-[2px_2px_0_#111217]"><Mail size={19}/></span><h2 className="text-2xl font-black">Gửi email hỗ trợ</h2></div><p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-700">Mô tả vấn đề, mã đơn (nếu có), thời điểm phát sinh và ảnh chụp đã che thông tin nhạy cảm. Không gửi mật khẩu hoặc API secret.</p><a href="mailto:contact.gumballz@gmail.com" className="mt-3 inline-block font-black underline underline-offset-4">contact.gumballz@gmail.com</a></div><a href="mailto:contact.gumballz@gmail.com?subject=GumballZ%20Hub%20Support" className="neo-button w-fit"><Mail size={17}/> Soạn email</a></section>
+    <aside className="mt-6 flex items-start gap-3 border-[3px] border-black bg-[#fff2a8] p-5 shadow-[4px_4px_0_#111217]"><CircleHelp size={20} className="mt-0.5 shrink-0"/><p className="text-sm font-semibold leading-6">Cần tìm hướng dẫn trước? Mở <Link href="/docs" className="font-black underline">trang tài liệu</Link>. Xem thêm <Link href="/privacy" className="font-black underline">chính sách quyền riêng tư</Link> và <Link href="/terms" className="font-black underline">điều khoản dịch vụ</Link>.</p></aside>
+  </div></main>;
 }

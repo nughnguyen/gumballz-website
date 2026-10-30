@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import crypto from 'crypto';
+import { requireAdmin } from "@/app/utils/adminAuth";
 
 export const dynamic = 'force-dynamic';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
+  (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!
 );
 
 // Helper function to generate key with double encoding
@@ -30,20 +31,23 @@ function generateShortId(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await requireAdmin(request))) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const body = await request.json();
     const { days = 1, amount } = body;
 
-    if (!amount || amount <= 0) {
+    const durationDays = Number(days);
+    const price = Number(amount);
+    if (!Number.isSafeInteger(durationDays) || durationDays < 1 || durationDays > 3650 || !Number.isSafeInteger(price) || price < 1 || price > 10000000) {
       return NextResponse.json({
         success: false,
-        error: 'Số tiền không hợp lệ'
+        error: 'Thời hạn hoặc số tiền không hợp lệ'
       }, { status: 400 });
     }
 
     // Generate premium key
     const keyValue = generateKey();
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days);
+    expiresAt.setDate(expiresAt.getDate() + durationDays);
 
     // Generate short link ID
     const shortId = generateShortId();
@@ -60,8 +64,8 @@ export async function POST(request: NextRequest) {
       .insert({
         key_value: keyValue,
         key_type: 'PREMIUM',
-        duration_days: days,
-        price_vnd: amount,
+        duration_days: durationDays,
+        price_vnd: price,
         short_link: shortLink,
         destination_url: destinationUrl,
         expires_at: expiresAt.toISOString(),
@@ -87,8 +91,8 @@ export async function POST(request: NextRequest) {
       key: newKey.key_value,
       shortLink: shortLink,
       destinationUrl: destinationUrl,
-      days: days,
-      amount: amount,
+      days: durationDays,
+      amount: price,
       expiresAt: newKey.expires_at,
       message: 'Key premium được tạo. Hoàn thành thanh toán để kích hoạt.'
     });

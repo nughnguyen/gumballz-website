@@ -1,31 +1,59 @@
-# ============================================
+﻿# ============================================
 # GumballZ Payment Gateway Environment Config
 # ============================================
 
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key-here
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_KEY=
 
 # Application URL (for generating links)
-NEXT_PUBLIC_APP_URL=https://your-domain.com
+NEXT_PUBLIC_APP_URL=
 
 # Yeumoney API (Optional - for future integration)
 # YEUMONEY_API_KEY=your-yeumoney-api-key
 # YEUMONEY_API_URL=https://api.yeumoney.com
 
-# Bank Account Info (for payment QR)
-BANK_ACCOUNT_NUMBER=your-bank-account
-BANK_NAME=VIETCOMBANK
-ACCOUNT_HOLDER_NAME=NGUYEN QUOC HUNG
+# Bank Account Info (server only; never use NEXT_PUBLIC_ for payment details)
+BANK_ID=
+BANK_ACCOUNT_NO=
+BANK_ACCOUNT_NAME=
 
-# Casso Webhook (existing)
-CASSO_API_KEY=your-casso-api-key
+# payOS payment channel credentials (server only; create webhook URL /api/webhook/payos in payOS)
+PAYOS_CLIENT_ID=
+PAYOS_API_KEY=
+PAYOS_CHECKSUM_KEY=
 
 # Sepay Webhook (existing)  
-SEPAY_API_KEY=your-sepay-api-key
+SEPAY_API_KEY=
+# Recommended: configure SePay HMAC-SHA256, then set its Secret Key here.
+# If set, HMAC is preferred over SEPAY_API_KEY.
+SEPAY_WEBHOOK_SECRET=
+# VNPay IPN checksum secret (required only when VNPay IPN is configured).
+VNPAY_HASH_SECRET=
 
 # Discord Bot (for notifications - optional)
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook
+DISCORD_WEBHOOK_URL=
+
+# Server-only secret shared with the Minecraft plugin API client.
+MINECRAFT_API_KEY=
 
 # Development Mode
-NODE_ENV=production
+NODE_ENV=
+# Server only: exact email(s) of existing Supabase Auth users allowed to administer the site.
+# Add more users separated by commas, then restart locally or redeploy the host.
+ADMIN_EMAILS=
+# Random server-only secret for the scheduled cleanup endpoint (Authorization: Bearer <secret>).
+CRON_SECRET=
+
+# Server only payment settings. Do not add NEXT_PUBLIC_ to these variable names.
+BANK_ID_2=
+BANK_ACCOUNT_NO_2=
+BANK_ACCOUNT_NAME_2=
+MOMO_PHONE=
+# MoMo IPN signature validation; keep these server-only.
+MOMO_ACCESS_KEY=
+MOMO_SECRET_KEY=
+
+# Server only Yeulink API token. Rotate any token previously committed to source.
+YEULINK_TOKEN=

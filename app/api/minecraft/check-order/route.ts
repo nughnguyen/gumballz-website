@@ -7,10 +7,10 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const orderId = searchParams.get('id');
-        const apiKey = searchParams.get('apiKey');
-
-        // Validate API Key
+        // API keys must not be sent in URLs, which are commonly retained in logs.
         const validKey = process.env.MINECRAFT_API_KEY;
+        const authorization = request.headers.get('authorization') || '';
+        const apiKey = request.headers.get('x-api-key') || (authorization.startsWith('Bearer ') ? authorization.slice(7) : '');
         if (!validKey || apiKey !== validKey) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
@@ -61,16 +61,19 @@ export async function GET(request: Request) {
         }
 
         // Mark as rewarded FIRST to prevent double reward (atomic-style)
-        const { error: updateError } = await supabase
+        const { data: claimed, error: updateError } = await supabase
             .from('transactions')
             .update({ rewarded: true })
             .eq('id', orderId)
-            .eq('rewarded', false); // Only update if not already rewarded
+            .eq('rewarded', false)
+            .select('id')
+            .maybeSingle();
 
         if (updateError) {
             console.error('Minecraft Check Order: Failed to mark rewarded', updateError);
             return NextResponse.json({ success: false, error: 'Reward processing error' }, { status: 500 });
         }
+        if (!claimed) return NextResponse.json({ success: false, status: 'already_rewarded' }, { status: 409 });
 
         return NextResponse.json({
             success: true,

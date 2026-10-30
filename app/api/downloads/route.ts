@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/app/utils/supabaseClient";
+import { serverSupabase } from "@/app/utils/supabaseServer";
+import { requireAdmin } from "@/app/utils/adminAuth";
 
 export async function GET(req: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from("downloads")
-      .select("*")
+      .select("id,title,description,image_url,version,file_size,created_at")
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
@@ -20,15 +21,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     // For Admin to add download
     try {
+        if (!(await requireAdmin(req))) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         const body = await req.json();
-        const { secret, title, description, image_url, download_url, version, file_size } = body;
+        const { title, description, image_url, download_url, version, file_size } = body;
+        if (typeof title !== "string" || title.trim().length < 2 || title.length > 120 || typeof download_url !== "string" || !/^https:\/\//i.test(download_url) || download_url.length > 2048 || (image_url && (typeof image_url !== "string" || !/^https:\/\//i.test(image_url)))) return NextResponse.json({ success: false, error: "Invalid product details" }, { status: 400 });
 
-        const validSecret = process.env.API_SECRET_KEY || "default_insecure_secret";
-        if (secret !== validSecret) {
-             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
-
-        const { data, error } = await supabase
+        const { data, error } = await serverSupabase
             .from("downloads")
             .insert({ 
                 title, description, image_url, download_url, version, file_size, is_active: true

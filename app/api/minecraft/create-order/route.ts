@@ -53,6 +53,7 @@ export async function POST(request: Request) {
                 amount: amountNum,
                 description: orderCode,
                 status: 'pending',
+                method: 'Banking',
                 rewarded: false,
                 metadata: {
                     type: 'minecraft',

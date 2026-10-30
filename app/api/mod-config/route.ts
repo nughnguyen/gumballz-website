@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/app/utils/supabaseClient";
+import { serverSupabase as supabase } from "@/app/utils/supabaseServer";
+import { requireAdmin } from "@/app/utils/adminAuth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -33,14 +34,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     // For Admin to update config
     try {
+        if (!(await requireAdmin(req))) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         const body = await req.json();
-        const { secret, config_name, config_data, admin_name } = body;
-
-        // Secret check using Environment Variable
-        const validSecret = process.env.API_SECRET_KEY || "default_insecure_secret";
-        if (secret !== validSecret) {
-             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        }
+        const { config_name, config_data, admin_name } = body;
+        if (typeof config_name !== "string" || config_name.length > 120 || typeof config_data !== "string" || config_data.length > 100000) return NextResponse.json({ success: false, error: "Invalid configuration" }, { status: 400 });
 
         const { data, error } = await supabase
             .from("mod_configs")

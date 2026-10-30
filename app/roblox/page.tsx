@@ -83,7 +83,7 @@ export default function RobloxPage() {
               </p>
 
               <Link
-                href="/roblox/docs"
+                href="/docs/roblox"
                 className="inline-flex w-full items-center justify-center gap-2 px-6 py-4 bg-slate-900 text-white font-bold rounded-xl border-[3px] border-slate-900 shadow-[4px_4px_0px_0px_#94A3B8] hover:shadow-[2px_2px_0px_0px_#94A3B8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
               >
                 <span>Xem Tài Liệu</span>

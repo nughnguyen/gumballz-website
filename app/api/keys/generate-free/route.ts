@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateRobloxKey, getEndOfDayVN } from "@/app/lib/key-generator";
+import { checkRateLimit, rateLimitResponse } from "@/app/utils/rateLimit";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +11,14 @@ const supabase = createClient(
 );
 
 // Yeulink API configuration
-const YEULINK_TOKEN = "16ad669a-9404-48d7-aa63-8522b4014e11";
+const YEULINK_TOKEN = process.env.YEULINK_TOKEN;
 const YEULINK_API_URL = "https://yeulink.com/st";
 
 export async function POST(req: NextRequest) {
   try {
+    const rate = await checkRateLimit(req, 'generate-free-key', 3, 3600);
+    if (!rate.allowed) return rateLimitResponse(rate);
+    if (!YEULINK_TOKEN) return NextResponse.json({ success: false, error: "Key service is not configured" }, { status: 503 });
     const body = await req.json().catch(() => ({}));
     const type = body.type || 'mod'; // 'mod' or 'roblox'
     
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
       // Generate short link
       const shortLink = await createYeulinkShortLink(destinationUrl);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('roblox_keys')
         .insert({
           key_value: keyValue,
@@ -39,9 +43,7 @@ export async function POST(req: NextRequest) {
           expires_at: expiresAt.toISOString(),
           is_used: false,
           metadata: { provider: 'yeulink', short_link: shortLink }
-        })
-        .select()
-        .single();
+        });
 
       if (error) {
         console.error('Roblox key insert error:', error);
@@ -75,6 +77,9 @@ export async function POST(req: NextRequest) {
         message: "Key hôm nay đã sẵn sàng"
       });
     }
+    if (checkError && checkError.code !== 'PGRST116') {
+      return NextResponse.json({ success: false, error: "Không kiểm tra được key miễn phí hiện có." }, { status: 503 });
+    }
 
     // 2. Nếu chưa có, tạo mới
     const keyValueGenerator = () => {
@@ -87,7 +92,7 @@ export async function POST(req: NextRequest) {
     const destinationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/keys/claim?key=${keyValue}&type=mod`; // Standardized claim page
     const shortLink = await createYeulinkShortLink(destinationUrl);
 
-    const { data: newKey, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from('mod_keys')
       .insert({
         key_value: keyValue,
@@ -99,9 +104,7 @@ export async function POST(req: NextRequest) {
         usage_count: 0,
         short_link: shortLink,
         destination_url: destinationUrl
-      })
-      .select()
-      .single();
+      });
 
     if (insertError) {
       console.error('Insert error:', insertError);
@@ -137,13 +140,12 @@ async function createYeulinkShortLink(destinationUrl: string): Promise<string> {
         return location;
     } else {
         console.error('Yeulink API did not return a Location header');
-        // Fallback or return original implementation behavior
-        // Since original behavior returned yeulinkUrl on fail, we keep it consistent or assume error
-        return yeulinkUrl; 
+        // Never expose the provider request URL because it contains the private API token.
+        return destinationUrl;
     }
   } catch (error) {
     console.error('Error creating yeulink:', error);
-    return yeulinkUrl;
+    return destinationUrl;
   }
 }
 

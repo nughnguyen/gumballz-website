@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, rateLimitResponse } from "@/app/utils/rateLimit";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,8 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    const rate = await checkRateLimit(request, 'key-verify', 60, 60);
+    if (!rate.allowed) return rateLimitResponse(rate);
     const body = await request.json();
     const { key, deviceId } = body;
 
@@ -61,6 +64,10 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
+    if (!keyData.is_active) {
+      return NextResponse.json({ success: false, error: 'Key chưa được kích hoạt', valid: false }, { status: 403 });
+    }
+
     // Device binding logic
     if (keyData.device_id) {
       // Key already bound to a device
@@ -74,14 +81,17 @@ export async function POST(request: NextRequest) {
       // Same device, continue
     } else {
       // First time use - bind device to key
-      const { error: bindError } = await supabase
+      const { data: bound, error: bindError } = await supabase
         .from('mod_keys')
         .update({ 
           device_id: deviceId,
           device_bound_at: now.toISOString(),
           is_active: true
         })
-        .eq('key_value', key);
+        .eq('id', keyData.id)
+        .is('device_id', null)
+        .select('device_id')
+        .maybeSingle();
 
       if (bindError) {
         console.error('Error binding device:', bindError);
@@ -91,16 +101,22 @@ export async function POST(request: NextRequest) {
           valid: false
         }, { status: 500 });
       }
+      if (!bound) {
+        const { data: latest } = await supabase.from('mod_keys').select('device_id').eq('id', keyData.id).maybeSingle();
+        if (latest?.device_id !== deviceId) return NextResponse.json({ success: false, error: 'Key đã được sử dụng trên thiết bị khác', valid: false }, { status: 403 });
+      }
     }
 
     // Update last verified timestamp and usage count
-    await supabase
+    const { error: usageError } = await supabase
       .from('mod_keys')
       .update({ 
         usage_count: keyData.usage_count + 1,
         last_verified_at: now.toISOString()
       })
-      .eq('key_value', key);
+      .eq('id', keyData.id)
+      .eq('device_id', deviceId);
+    if (usageError) return NextResponse.json({ success: false, error: 'Không thể xác minh key', valid: false }, { status: 500 });
 
     // Calculate remaining time
     const remainingMs = expiresAt.getTime() - now.getTime();
@@ -114,7 +130,7 @@ export async function POST(request: NextRequest) {
       keyValue: keyData.key_value,
       expiresAt: keyData.expires_at,
       hoursRemaining: remainingHours,
-      deviceBound: !!keyData.device_id,
+      deviceBound: true,
       message: 'Key hợp lệ'
     });
 

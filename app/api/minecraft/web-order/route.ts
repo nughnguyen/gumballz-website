@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
+import { checkRateLimit, rateLimitResponse } from '@/app/utils/rateLimit';
 
 function generateCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -12,17 +13,24 @@ function generateCode(): string {
 // Called from the website's Minecraft store page (no external API key needed)
 export async function POST(req: NextRequest) {
     try {
+        const rate = await checkRateLimit(req, 'minecraft-web-order', 5, 600);
+        if (!rate.allowed) return rateLimitResponse(rate);
         const body = await req.json();
         const { playerName, amountVnd, rewardXu } = body;
 
-        if (!playerName || typeof playerName !== 'string' || playerName.trim().length < 3) {
-            return NextResponse.json({ success: false, error: 'Tên Minecraft không hợp lệ (tối thiểu 3 ký tự)' }, { status: 400 });
+        if (!playerName || typeof playerName !== 'string' || !/^[A-Za-z0-9_]{3,16}$/.test(playerName.trim())) {
+            return NextResponse.json({ success: false, error: 'Tên Minecraft phải có 3–16 ký tự, chỉ gồm chữ, số và dấu gạch dưới.' }, { status: 400 });
         }
-        const amountNum = parseInt(amountVnd);
-        if (isNaN(amountNum) || amountNum < 10000) {
-            return NextResponse.json({ success: false, error: 'Số tiền tối thiểu 10,000đ' }, { status: 400 });
+        const amountNum = Number(amountVnd);
+        if (!Number.isSafeInteger(amountNum) || amountNum < 10000 || amountNum > 20000000) {
+            return NextResponse.json({ success: false, error: 'Số tiền nạp từ 10.000đ đến 20.000.000đ.' }, { status: 400 });
         }
-        const rewardNum = parseInt(rewardXu) || amountNum;
+        const rewardNum = rewardXu == null ? amountNum : Number(rewardXu);
+        const packageRewards: Record<number, number> = { 20000: 20000, 50000: 50000, 100000: 110000, 200000: 240000, 500000: 650000 };
+        const expectedReward = packageRewards[amountNum] || amountNum;
+        if (!Number.isSafeInteger(rewardNum) || rewardNum !== expectedReward) {
+            return NextResponse.json({ success: false, error: 'Gói xu không hợp lệ.' }, { status: 400 });
+        }
 
         const orderCode = generateCode();
         const { data, error } = await supabase
