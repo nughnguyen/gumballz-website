@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { generateRobloxKey, getEndOfDayVN } from "@/app/lib/key-generator";
 import { checkRateLimit, rateLimitResponse } from "@/app/utils/rateLimit";
+import { getServerSupabase } from "@/app/utils/supabaseServer";
 
 export const dynamic = 'force-dynamic';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
 
 // Yeulink API configuration
 const YEULINK_TOKEN = process.env.YEULINK_TOKEN;
@@ -16,6 +11,7 @@ const YEULINK_API_URL = "https://yeulink.com/st";
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = getServerSupabase();
     const rate = await checkRateLimit(req, 'generate-free-key', 3, 3600);
     if (!rate.allowed) return rateLimitResponse(rate);
     if (!YEULINK_TOKEN) return NextResponse.json({ success: false, error: "Key service is not configured" }, { status: 503 });

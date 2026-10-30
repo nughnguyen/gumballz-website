@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import crypto from 'crypto';
 import { requireAdmin } from "@/app/utils/adminAuth";
+import { getServerSupabase } from "@/app/utils/supabaseServer";
 
 export const dynamic = 'force-dynamic';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!
-);
 
 // Helper function to generate key with double encoding
 // Result: GUMBALLZ-{first 10 chars}
@@ -31,6 +26,7 @@ function generateShortId(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getServerSupabase();
     if (!(await requireAdmin(request))) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const body = await request.json();
     const { days = 1, amount } = body;

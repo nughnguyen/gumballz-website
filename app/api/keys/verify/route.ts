@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, rateLimitResponse } from "@/app/utils/rateLimit";
+import { getServerSupabase } from "@/app/utils/supabaseServer";
 
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
-
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getServerSupabase();
     const rate = await checkRateLimit(request, 'key-verify', 60, 60);
     if (!rate.allowed) return rateLimitResponse(rate);
     const body = await request.json();
