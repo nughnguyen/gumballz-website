@@ -12,12 +12,44 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ success: false, error: "Đăng nhập để mua sản phẩm." }, { status: 401 });
   const body = await request.json().catch(() => null);
   const productId = typeof body?.productId === "string" ? body.productId : "";
+  const paymentMethod = body?.paymentMethod === "wallet" ? "wallet" : "banking";
   if (!productId || productId.length > 64) return NextResponse.json({ success: false, error: "Sản phẩm không hợp lệ." }, { status: 400 });
 
   const { data: product } = await serverSupabase.from("products").select("id,title,category,price_vnd,key_duration_days,stock_count,is_active").eq("id", productId).eq("is_active", true).maybeSingle();
   if (!product) return NextResponse.json({ success: false, error: "Không tìm thấy sản phẩm." }, { status: 404 });
   if (product.category === "coiz") return NextResponse.json({ success: true, coiz: true, href: "/store/coiz" });
   if (product.stock_count === 0) return NextResponse.json({ success: false, error: "Sản phẩm đang hết hàng." }, { status: 409 });
+
+  if (paymentMethod === "wallet") {
+    const { data, error } = await serverSupabase.rpc("purchase_product_with_wallet", {
+      p_user_id: user.id,
+      p_product_id: product.id,
+    });
+    if (error) {
+      const errors: Record<string, { message: string; status: number }> = {
+        wallet_balance_insufficient: { message: "Số dư ví không đủ để thanh toán sản phẩm này.", status: 409 },
+        product_out_of_stock: { message: "Sản phẩm vừa hết hàng.", status: 409 },
+        product_unavailable: { message: "Sản phẩm hiện không khả dụng.", status: 409 },
+        product_not_payable_by_wallet: { message: "Sản phẩm này không thể thanh toán bằng ví.", status: 400 },
+      };
+      const knownError = errors[error.message];
+      if (knownError) return NextResponse.json({ success: false, error: knownError.message }, { status: knownError.status });
+      console.error("Wallet checkout failed:", error);
+      return NextResponse.json({ success: false, error: "Không thể thanh toán bằng ví lúc này." }, { status: 503 });
+    }
+    const purchase = Array.isArray(data) ? data[0] : null;
+    if (!purchase?.purchase_transaction_id) {
+      return NextResponse.json({ success: false, error: "Không thể hoàn tất thanh toán bằng ví." }, { status: 503 });
+    }
+    return NextResponse.json({
+      success: true,
+      id: purchase.purchase_transaction_id,
+      amount: product.price_vnd,
+      category: product.category,
+      paidWithWallet: true,
+      balance: Number(purchase.remaining_balance) || 0,
+    });
+  }
 
   const content = `GZ${crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase()}`;
   const free = product.price_vnd === 0;

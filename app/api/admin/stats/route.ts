@@ -9,6 +9,7 @@ type Transaction = {
   user_id: string | null;
   amount: number;
   status: string;
+  method: string | null;
   description: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await serverSupabase
       .from("transactions")
-      .select("id,user_id,amount,status,description,metadata,created_at")
+      .select("id,user_id,amount,status,method,description,metadata,created_at")
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
     if (error) return NextResponse.json({ success: false, error: "Không tải được số liệu giao dịch." }, { status: 503 });
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const paid = rows.filter((row) => row.status === "success");
   // Wallet deposits are paid income too; keep their subtotal separately below.
-  const revenueRows = paid;
+  const revenueRows = paid.filter((row) => row.method !== "Wallet");
   const walletTopups = paid.filter((row) => row.metadata?.type === "wallet_topup");
   const sum = (items: Transaction[]) => items.reduce((total, row) => total + Number(row.amount || 0), 0);
   const revenueToday = revenueRows.filter((row) => new Date(row.created_at) >= startOfToday);
