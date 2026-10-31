@@ -8,8 +8,8 @@ export async function GET(request: Request) {
   if (!(await requireAdmin(request))) return NextResponse.json({ success: false }, { status: 403 });
   const { data, error } = await serverSupabase
     .from("transactions")
-    .select("id,user_id,amount,description,method,metadata,created_at")
-    .eq("status", "pending")
+    .select("id,user_id,amount,description,method,metadata,created_at,status")
+    .in("status", ["pending", "failed"])
     .eq("metadata->>manual_review_requested", "true")
     .order("created_at", { ascending: true })
     .limit(100);
@@ -22,15 +22,21 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => null);
   const id = typeof body?.transactionId === "string" ? body.transactionId : "";
   const decision = body?.decision;
-  if (!/^[0-9a-f-]{36}$/i.test(id) || !["approve", "reject"].includes(decision)) {
+  if (!/^[0-9a-f-]{36}$/i.test(id) || !["approve", "reject", "delete"].includes(decision)) {
     return NextResponse.json({ success: false, error: "Yêu cầu không hợp lệ." }, { status: 400 });
+  }
+
+  if (decision === "delete") {
+    const { error } = await serverSupabase.from("transactions").delete().eq("id", id).eq("metadata->>manual_review_requested", "true");
+    if (error) return NextResponse.json({ success: false, error: "Không xóa được đơn." }, { status: 503 });
+    return NextResponse.json({ success: true, status: "deleted" });
   }
 
   const { data: transaction, error } = await serverSupabase
     .from("transactions")
     .select("id,metadata")
     .eq("id", id)
-    .eq("status", "pending")
+    .in("status", ["pending", "failed"])
     .eq("metadata->>manual_review_requested", "true")
     .maybeSingle();
   if (error || !transaction) return NextResponse.json({ success: false, error: "Đơn không còn chờ duyệt hoặc không tồn tại." }, { status: 409 });
@@ -45,7 +51,7 @@ export async function PATCH(request: Request) {
     .from("transactions")
     .update({ status: decision === "approve" ? "success" : "failed", metadata: nextMetadata })
     .eq("id", id)
-    .eq("status", "pending")
+    .in("status", ["pending", "failed"])
     .eq("metadata->>manual_review_requested", "true")
     .select("id,status")
     .maybeSingle();

@@ -51,8 +51,8 @@ function PaymentCard() {
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
-  const [selectedBank, setSelectedBank] = useState(BANK_1);
-  const [banks, setBanks] = useState<typeof BANK_1[]>(BANKS);
+  const [selectedBank, setSelectedBank] = useState({ ...BANK_1, note: "", automatic: true });
+  const [banks, setBanks] = useState<Array<typeof BANK_1 & { note?: string; automatic?: boolean }>>(BANKS);
   const [momoPhone, setMomoPhone] = useState(MOMO_PHONE);
   const [manualReviewRequested, setManualReviewRequested] = useState(false);
   const [manualReviewBusy, setManualReviewBusy] = useState(false);
@@ -67,12 +67,17 @@ function PaymentCard() {
       .then((res) => res.json())
       .then((data) => {
         if (!data.success) return;
-        const available = data.banks.map((bank: { id: string; account: string; name: string }) => ({ ...bank, icon: "🏦" }));
+        const available = data.banks.map((bank: { id: string; account: string; name: string; note?: string; automatic?: boolean }) => ({ ...bank, icon: "🏦" }));
         setBanks(available);
-        if (available[0]) setSelectedBank(available[0]);
+        if (available[0]) setSelectedBank({ ...available[0], note: available[0].note || "", automatic: available[0].automatic !== false });
         setMomoPhone(data.momoPhone || "");
       }).catch(() => undefined);
   }, [txId]);
+
+  useEffect(() => {
+    if (!txId || !selectedBank.account) return;
+    void fetch("/api/payment-details", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: txId, content, bankId: selectedBank.id, account: selectedBank.account, name: selectedBank.name, note: selectedBank.note || "", automatic: selectedBank.automatic !== false }) });
+  }, [txId, content, selectedBank]);
 
   useEffect(() => {
     if (!txId || method !== "Banking") return;
@@ -121,7 +126,7 @@ function PaymentCard() {
   useEffect(() => {
     const providerParam = searchParams.get("provider");
     if (providerParam === "sepay" && banks.length > 1) {
-        setSelectedBank(banks[1]);
+        setSelectedBank({ ...banks[1], note: banks[1].note || "", automatic: banks[1].automatic !== false });
     }
   }, [searchParams, banks]);
 
@@ -329,12 +334,12 @@ function PaymentCard() {
                   Thông Tin Chuyển Khoản
                 </h3>
 
-                {payosCheckoutUrl && <div className="border-[3px] border-slate-900 bg-[#ffe600] p-4 shadow-[4px_4px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><p className="mt-1 text-xs font-semibold">PayOS hỗ trợ chuyển khoản Napas 24/7 và tự xác nhận giao dịch.</p><button type="button" onClick={() => location.assign(payosCheckoutUrl)} className="clay-button mt-3 w-full">Mở trang thanh toán payOS <ExternalLink size={16}/></button></div>}
+                {payosCheckoutUrl && selectedBank.automatic !== false && <div className="border-[3px] border-slate-900 bg-[#ffe600] p-4 shadow-[4px_4px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><p className="mt-1 text-xs font-semibold">PayOS hỗ trợ chuyển khoản Napas 24/7 và tự xác nhận giao dịch.</p><button type="button" onClick={() => location.assign(payosCheckoutUrl)} className="clay-button mt-3 w-full">Mở trang thanh toán payOS <ExternalLink size={16}/></button></div>}
                 {payosLoading && <p className="text-xs font-semibold text-slate-500">Đang kết nối payOS…</p>}
                 {payosError && <p role="status" className="border-2 border-amber-600 bg-amber-50 p-3 text-xs font-bold">{payosError} Bạn vẫn có thể chuyển khoản theo thông tin bên dưới.</p>}
 
                 <div className="space-y-4">
-                  <DetailRow label="Ngân hàng" value={selectedBank.id} />
+                  {banks.length > 1 && <select aria-label="Chọn tài khoản nhận tiền" value={selectedBank.account} onChange={(event) => { const bank = banks.find((item) => item.account === event.target.value); if (bank) setSelectedBank({ ...bank, note: bank.note || "", automatic: bank.automatic !== false }); }} className="w-full border-[3px] border-slate-900 bg-white p-3 font-bold">{banks.map((bank) => <option key={`${bank.id}-${bank.account}`} value={bank.account}>{bank.id} · {bank.account} · {bank.name}</option>)}</select>}{selectedBank.note && <p className="border-2 border-cyan-300 bg-cyan-50 p-3 text-sm font-semibold">{selectedBank.note}</p>}<p className="text-xs font-black uppercase">{selectedBank.automatic === false ? "Tài khoản này cần admin đối chiếu thủ công" : "Giao dịch tự động"}</p><DetailRow label="Ngân hàng" value={selectedBank.id} />
                   <DetailRow label="Chủ tài khoản" value={selectedBank.name} />
                   <DetailRow
                     label="Số tài khoản"
@@ -368,7 +373,7 @@ function PaymentCard() {
                   </div>
                 </div>
 
-                {txId && method === "Banking" && !status.startsWith("success") && <div className="border-t-2 border-dashed border-slate-300 pt-4">
+                {txId && method === "Banking" && selectedBank.automatic === false && !status.startsWith("success") && <div className="border-t-2 border-dashed border-slate-300 pt-4">
                   {manualReviewRequested ? <div role="status" aria-live="polite" className="border-[3px] border-slate-900 bg-amber-100 p-4 shadow-[3px_3px_0_#1e293b]"><p className="font-black">Đang chờ Admin duyệt</p><p className="mt-1 text-sm font-semibold">Yêu cầu thanh toán của bạn đã được gửi. Đơn sẽ được xử lý sau khi Admin đối chiếu sao kê.</p></div> : <><p className="text-sm font-semibold leading-6 text-slate-600">Chuyển khoản từ ngân hàng chưa hỗ trợ tự động? Sau khi chuyển tiền, hãy gửi yêu cầu để Admin kiểm tra thủ công.</p><button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button mt-3 w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Tôi đã chuyển khoản — yêu cầu Admin duyệt"}</button></>}
                   {manualReviewMessage && <p role="status" className="mt-2 text-sm font-bold">{manualReviewMessage}</p>}
                   {manualReviewRequested && <Link href="/account" className="mt-3 inline-flex items-center gap-1 text-sm font-black underline">Theo dõi trong tài khoản <ExternalLink size={14}/></Link>}

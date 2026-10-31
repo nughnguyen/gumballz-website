@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Mail, MessageCircle } from "lucide-react";
 import Image from "next/image";
+import { SiteStats } from "./SiteStats";
 
 export function Footer(){
   return <footer className="border-t-[3px] border-black bg-[#fffdf5]">
@@ -9,6 +10,6 @@ export function Footer(){
       <div><h2 className="text-sm font-black uppercase tracking-widest">Khám phá</h2><ul className="mt-4 space-y-3 text-sm font-bold"><li><Link href="/store" className="hover:underline">Cửa hàng</Link></li><li><Link href="/store/coiz" className="hover:underline">Nạp dịch vụ</Link></li><li><Link href="/keys" className="hover:underline">Quản lý key</Link></li><li><Link href="/docs" className="hover:underline">Tài liệu</Link></li></ul></div>
       <div><h2 className="text-sm font-black uppercase tracking-widest">Hỗ trợ</h2><ul className="mt-4 space-y-3 text-sm font-bold"><li><Link href="/contact" className="inline-flex items-center gap-2 hover:underline"><MessageCircle size={16}/> Liên hệ hỗ trợ <ArrowUpRight size={14}/></Link></li><li><a href="mailto:contact.gumballz@gmail.com" className="inline-flex items-center gap-2 hover:underline"><Mail size={16}/> contact.gumballz@gmail.com</a></li><li><Link href="/privacy" className="hover:underline">Chính sách bảo mật</Link></li><li><Link href="/terms" className="hover:underline">Điều khoản dịch vụ</Link></li></ul></div>
     </div>
-    <div className="border-t-2 border-black bg-[#ffe600] px-5 py-4 text-xs font-black md:px-10"><div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3"><span>© {new Date().getFullYear()} GUMBALLZ HUB</span><span>NEO-BRUTAL DIGITAL GOODS</span></div></div>
+    <div className="border-t-2 border-black bg-[#ffe600] px-5 py-4 text-xs font-black md:px-10"><div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3"><span>© {new Date().getFullYear()} GUMBALLZ HUB</span><SiteStats/></div></div>
   </footer>;
 }
