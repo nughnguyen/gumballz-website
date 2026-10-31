@@ -28,8 +28,8 @@ export default function StoreCatalog(){
       const response=await fetch("/api/products/checkout",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({productId:p.id,paymentMethod})});const order=await response.json();
       if(!response.ok||!order.success){setNotice(order.error||"Không thể tạo đơn hàng.");return}
       setCheckoutProduct(null);
-      if(order.paidWithWallet){if(order.category==="key"){const check=await fetch(`/api/check-transaction?id=${encodeURIComponent(order.id)}`,{cache:"no-store"});const issued=await check.json();if(issued.success&&issued.key){router.push(`/keys/claim?key=${encodeURIComponent(issued.key)}`);return}}router.push("/account");return}
-      if(order.free){if(order.category==="key"){const check=await fetch(`/api/check-transaction?id=${encodeURIComponent(order.id)}`,{cache:"no-store"});const issued=await check.json();if(issued.success&&issued.key){router.push(`/keys/claim?key=${encodeURIComponent(issued.key)}`);return}}router.push("/account");return}
+      if(order.paidWithWallet){if(order.category==="key"){const check=await fetch(`/api/check-transaction?id=${encodeURIComponent(order.id)}`,{headers:{Authorization:`Bearer ${sessionData.session.access_token}`},cache:"no-store"});const issued=await check.json();if(issued.success&&issued.key){router.push(`/keys/claim?key=${encodeURIComponent(issued.key)}`);return}}router.push("/account");return}
+      if(order.free){if(order.category==="key"){const check=await fetch(`/api/check-transaction?id=${encodeURIComponent(order.id)}`,{headers:{Authorization:`Bearer ${sessionData.session.access_token}`},cache:"no-store"});const issued=await check.json();if(issued.success&&issued.key){router.push(`/keys/claim?key=${encodeURIComponent(issued.key)}`);return}}router.push("/account");return}
       const expiry=Math.floor(Date.now()/1000)+600;router.push(`/payment?amount=${order.amount}&content=${encodeURIComponent(order.content)}&method=Banking&expiry=${expiry}&txId=${order.id}`);
     }catch{setNotice("Máy chủ chưa phản hồi. Vui lòng thử lại.")}finally{setBusy("")}
   },[router]);

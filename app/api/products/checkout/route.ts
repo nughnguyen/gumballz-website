@@ -12,8 +12,9 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ success: false, error: "Đăng nhập để mua sản phẩm." }, { status: 401 });
   const body = await request.json().catch(() => null);
   const productId = typeof body?.productId === "string" ? body.productId : "";
-  const paymentMethod = body?.paymentMethod === "wallet" ? "wallet" : "banking";
-  if (!productId || productId.length > 64) return NextResponse.json({ success: false, error: "Sản phẩm không hợp lệ." }, { status: 400 });
+  if (body?.paymentMethod !== "wallet" && body?.paymentMethod !== "banking") return NextResponse.json({ success: false, error: "Invalid payment method." }, { status: 400 });
+  const paymentMethod: "wallet" | "banking" = body.paymentMethod;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId)) return NextResponse.json({ success: false, error: "Invalid product id." }, { status: 400 });
 
   const { data: product } = await serverSupabase.from("products").select("id,title,category,price_vnd,key_duration_days,stock_count,is_active").eq("id", productId).eq("is_active", true).maybeSingle();
   if (!product) return NextResponse.json({ success: false, error: "Không tìm thấy sản phẩm." }, { status: 404 });

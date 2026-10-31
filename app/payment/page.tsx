@@ -16,6 +16,7 @@ import {
   Download
 } from "lucide-react";
 import Link from 'next/link';
+import { supabase } from "@/app/utils/supabaseClient";
 
 const BANK_1 = {
   id: "",
@@ -107,7 +108,9 @@ function PaymentCard() {
         if (!txId && !content) return;
         try {
             const queryParam = txId ? `id=${txId}` : `content=${content}`;
-            const res = await fetch(`/api/check-transaction?${queryParam}`);
+            const { data: sessionData } = await supabase.auth.getSession();
+            const headers = sessionData.session ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {};
+            const res = await fetch(`/api/check-transaction?${queryParam}`, { headers, cache: "no-store" });
             const data = await res.json();
             if (data.success) {
                 setStatus("success");
@@ -187,7 +190,9 @@ function PaymentCard() {
     const interval = setInterval(async () => {
       try {
         const queryParam = txId ? `id=${txId}` : `content=${content}`;
-        const res = await fetch(`/api/check-transaction?${queryParam}`);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const headers = sessionData.session ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {};
+        const res = await fetch(`/api/check-transaction?${queryParam}`, { headers, cache: "no-store" });
         const data = await res.json();
         if (data.success) {
           setStatus("success");

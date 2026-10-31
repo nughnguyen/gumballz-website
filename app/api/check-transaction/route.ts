@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/app/utils/supabaseServer';
 import { generateModKey, generateRobloxKey } from '@/app/lib/key-generator';
 import { checkRateLimit, rateLimitResponse } from '@/app/utils/rateLimit';
+import { getAuthenticatedUser } from '@/app/utils/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
 
     let query = supabase
         .from('transactions')
-        .select('*');
+        .select('id,user_id,status,metadata');
 
     if (txId) {
         query = query.eq('id', txId);
@@ -28,6 +29,14 @@ export async function GET(request: Request) {
 
     if (error || !transaction) {
         return NextResponse.json({ success: false });
+    }
+
+    // A successful key transaction contains a bearer credential. Only its owner may retrieve or trigger issuance.
+    if (transaction.metadata?.type === 'key') {
+        const user = await getAuthenticatedUser(request);
+        if (!user || user.id !== transaction.user_id) {
+            return NextResponse.json({ success: transaction.status === 'success', status: transaction.status }, { headers: { 'Cache-Control': 'private, no-store' } });
+        }
     }
 
     // Nếu giao dịch thành công
@@ -77,7 +86,7 @@ export async function GET(request: Request) {
             key: vipKey,
             type: transaction.metadata?.type,
             category: transaction.metadata?.category
-        });
+        }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
     
     return NextResponse.json({
