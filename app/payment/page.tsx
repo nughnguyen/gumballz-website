@@ -155,7 +155,7 @@ function PaymentCard() {
       : `https://img.vietqr.io/image/${selectedBank.id.toLowerCase()}-${selectedBank.account}-qr_only.png?amount=${amount}&addInfo=${content}&accountName=${encodeURIComponent(selectedBank.name)}`;
 
   useEffect(() => {
-    if (status !== "success" || transactionType !== "product") return;
+    if (status !== "success") return;
     const redirect = window.setTimeout(() => router.replace("/account"), 1200);
     return () => window.clearTimeout(redirect);
   }, [router, status, transactionType]);
@@ -202,7 +202,7 @@ function PaymentCard() {
   }, [expiryParam, status]);
 
   useEffect(() => {
-    if ((!txId && (!content || content === "UNKNOWN")) || isExpired || status === "success") return;
+    if ((!txId && (!content || content === "UNKNOWN")) || status === "success") return;
     const interval = setInterval(async () => {
       try {
         const queryParam = txId ? `id=${txId}` : `content=${content}`;
@@ -220,7 +220,7 @@ function PaymentCard() {
           setManualReviewRequested(true);
         }
       } catch (e) { console.error(e); }
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [content, txId, isExpired, status]);
 

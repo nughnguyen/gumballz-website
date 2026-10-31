@@ -53,7 +53,13 @@ export default function AdminDashboard() {
     } finally { setLoading(false); setRefreshing(false); }
   }, []);
 
-  useEffect(() => { void loadStats(); }, [loadStats]);
+  useEffect(() => {
+    void loadStats();
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") void loadStats(true); };
+    const interval = window.setInterval(refreshWhenVisible, 10000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+  }, [loadStats]);
   const maxDailyRevenue = useMemo(() => Math.max(1, ...(stats?.daily.map((day) => day.revenue) || [])), [stats]);
 
   async function downloadProduct(transactionId: string) {

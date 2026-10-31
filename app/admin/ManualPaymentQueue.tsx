@@ -42,7 +42,13 @@ export default function ManualPaymentQueue() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") void load(); };
+    const interval = window.setInterval(refreshWhenVisible, 15000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+  }, [load]);
 
   async function decide(order: ManualPayment, decision: "approve" | "reject" | "delete") {
     const actionText = decision === "approve" ? "approve or restore and fulfill" : decision === "reject" ? "reject" : "permanently delete";
