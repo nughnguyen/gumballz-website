@@ -7,7 +7,7 @@ export async function GET() {
   const { data, error } = await serverSupabase.from("transactions")
     .select("metadata,created_at")
     .eq("status", "success")
-    .in("metadata->>type", ["product", "key"])
+    .in("metadata->>type", ["product", "key", "game_account"])
     .not("metadata->>product_title", "is", null)
     .order("created_at", { ascending: false }).limit(6);
   if (error) return NextResponse.json({ success: true, data: [] }, { headers: { "Cache-Control": "public, max-age=60" } });

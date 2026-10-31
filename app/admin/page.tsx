@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownToLine, ArrowRight, Box, CircleDollarSign, Clock3, KeyRound, Package, RefreshCw, Settings2, ShoppingBag, Sparkles, Trash2, Users } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, Box, CircleDollarSign, Clock3, Gamepad2, KeyRound, Package, RefreshCw, Settings2, ShoppingBag, Sparkles, Trash2, Users } from "lucide-react";
 import { supabase } from "@/app/utils/supabaseClient";
 import ManualPaymentQueue from "@/app/admin/ManualPaymentQueue";
 
@@ -31,6 +31,7 @@ const sections = [
   { title: "Quản lý key", desc: "Tạo key và kiểm soát thời hạn", href: "/admin/keys", icon: KeyRound, color: "bg-[#7FE7D6]" },
   { title: "Cấu hình dịch vụ", desc: "Cập nhật cấu hình từ xa", href: "/admin/mod-config", icon: Settings2, color: "bg-[#7FE7D6]" },
   { title: "Tài nguyên tải", desc: "Quản lý file và đường dẫn tải", href: "/admin/downloads", icon: Box, color: "bg-[#7FE7D6]" },
+  { title: "Tài khoản game", desc: "Quản lý acc lẻ, kho túi mù và nhập danh sách acc", href: "/admin/game-accounts", icon: Gamepad2, color: "bg-[#3BA7F2]" },
 ];
 
 export default function AdminDashboard() {
@@ -119,6 +120,6 @@ export default function AdminDashboard() {
       {loading && <p className="p-6 text-sm font-bold">Đang tải giao dịch…</p>}{!loading && !stats?.recent.length && <p className="p-6 text-sm font-bold">Chưa có giao dịch nào.</p>}</div>
     </section>
 
-    <section><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-black tracking-widest">QUẢN LÝ</p><h2 className="mt-1 text-2xl font-black">Lối tắt quản trị</h2></div><span className="neo-badge">04 KHU VỰC</span></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{sections.map(({ title, desc, href, icon: Icon, color }) => <Link href={href} key={href} className="neo-card group flex min-h-48 min-w-0 flex-col bg-white p-5 transition hover:-translate-y-1"><span className={`grid size-11 place-items-center border-[3px] border-black ${color} shadow-[3px_3px_0_#111217]`}><Icon size={20}/></span><h3 className="mt-4 break-words text-lg font-black">{title}</h3><p className="mt-1 text-sm font-medium leading-5 text-slate-600">{desc}</p><span className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-black">Mở quản lý <ArrowRight size={16}/></span></Link>)}</div></section>
+    <section><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-black tracking-widest">QUẢN LÝ</p><h2 className="mt-1 text-2xl font-black">Lối tắt quản trị</h2></div><span className="neo-badge">05 KHU VỰC</span></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{sections.map(({ title, desc, href, icon: Icon, color }) => <Link href={href} key={href} className="neo-card group flex min-h-48 min-w-0 flex-col bg-white p-5 transition hover:-translate-y-1"><span className={`grid size-11 place-items-center border-[3px] border-black ${color} shadow-[3px_3px_0_#111217]`}><Icon size={20}/></span><h3 className="mt-4 break-words text-lg font-black">{title}</h3><p className="mt-1 text-sm font-medium leading-5 text-slate-600">{desc}</p><span className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-black">Mở quản lý <ArrowRight size={16}/></span></Link>)}</div></section>
   </div>;
 }

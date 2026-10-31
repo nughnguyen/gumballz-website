@@ -16,10 +16,17 @@ export async function POST(request: Request) {
   const paymentMethod: "wallet" | "banking" = body.paymentMethod;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId)) return NextResponse.json({ success: false, error: "Invalid product id." }, { status: 400 });
 
-  const { data: product } = await serverSupabase.from("products").select("id,title,category,price_vnd,key_duration_days,stock_count,is_active").eq("id", productId).eq("is_active", true).maybeSingle();
+  const { data: product } = await serverSupabase.from("products").select("id,title,category,price_vnd,key_duration_days,stock_count,is_active,account_sale_mode").eq("id", productId).eq("is_active", true).maybeSingle();
   if (!product) return NextResponse.json({ success: false, error: "Không tìm thấy sản phẩm." }, { status: 404 });
   if (product.category === "coiz") return NextResponse.json({ success: true, coiz: true, href: "/store/coiz" });
   if (product.stock_count === 0) return NextResponse.json({ success: false, error: "Sản phẩm đang hết hàng." }, { status: 409 });
+  if (product.category !== "key" && product.category !== "game_account") {
+    const { data: previousPurchase, error: purchaseLookupError } = await serverSupabase.from("transactions")
+      .select("id").eq("user_id", user.id).eq("status", "success")
+      .eq("metadata->>type", "product").eq("metadata->>product_id", product.id).limit(1).maybeSingle();
+    if (purchaseLookupError) return NextResponse.json({ success: false, error: "Could not verify product purchase history." }, { status: 503 });
+    if (previousPurchase) return NextResponse.json({ success: false, error: "You already purchased this product." }, { status: 409 });
+  }
 
   if (paymentMethod === "wallet") {
     const { data, error } = await serverSupabase.rpc("purchase_product_with_wallet", {
@@ -29,7 +36,9 @@ export async function POST(request: Request) {
     if (error) {
       const errors: Record<string, { message: string; status: number }> = {
         wallet_balance_insufficient: { message: "Số dư ví không đủ để thanh toán sản phẩm này.", status: 409 },
+        product_already_purchased: { message: "You already purchased this product.", status: 409 },
         product_out_of_stock: { message: "Sản phẩm vừa hết hàng.", status: 409 },
+        game_account_out_of_stock: { message: "Kho tài khoản vừa hết hàng.", status: 409 },
         product_unavailable: { message: "Sản phẩm hiện không khả dụng.", status: 409 },
         product_not_payable_by_wallet: { message: "Sản phẩm này không thể thanh toán bằng ví.", status: 400 },
       };
@@ -56,9 +65,14 @@ export async function POST(request: Request) {
   const free = product.price_vnd === 0;
   const metadata = product.category === "key"
     ? { type: "key", category: "mod", duration_days: product.key_duration_days, product_id: product.id, product_title: product.title, method: "Banking" }
+    : product.category === "game_account"
+      ? { type: "game_account", product_id: product.id, product_title: product.title, account_sale_mode: product.account_sale_mode, method: "Banking" }
     : { type: "product", product_id: product.id, product_title: product.title, method: "Banking" };
 
   const { data: transaction, error } = await serverSupabase.from("transactions").insert({ user_id: user.id, amount: product.price_vnd, description: content, status: free ? "success" : "pending", rewarded: free, method: "Banking", metadata }).select("id").single();
-  if (error || !transaction) return NextResponse.json({ success: false, error: "Không thể tạo đơn hàng." }, { status: 500 });
+  if (error || !transaction) {
+    if (error?.message?.includes("game_account_out_of_stock")) return NextResponse.json({ success: false, error: "Kho tài khoản vừa hết hàng." }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Không thể tạo đơn hàng." }, { status: 500 });
+  }
   return NextResponse.json({ success: true, id: transaction.id, amount: product.price_vnd, content, free, category: product.category });
 }
