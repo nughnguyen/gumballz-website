@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       customers: new Set(rows.map((row) => row.user_id).filter((id): id is string => Boolean(id))).size,
     },
     daily,
-    recent: rows.slice(0, 12),
+    recent: rows.slice(0, 50),
     generatedAt: now.toISOString(),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }
