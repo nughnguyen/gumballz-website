@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   }
 
   if (typeof metadata.payos_checkout_url === "string") {
-    return NextResponse.json({ success: true, configured: true, payable: true, checkoutUrl: metadata.payos_checkout_url });
+    return NextResponse.json({ success: true, configured: true, payable: true, checkoutUrl: metadata.payos_checkout_url, qrCode: metadata.payos_qr_code || null });
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -93,12 +93,13 @@ export async function POST(request: Request) {
 
   const responseBody = await payosResponse.json().catch(() => null);
   const checkoutUrl = responseBody?.data?.checkoutUrl;
+  const qrCode = typeof responseBody?.data?.qrCode === "string" && responseBody.data.qrCode.length <= 2048 ? responseBody.data.qrCode : null;
   if (!payosResponse.ok || responseBody?.code !== "00" || typeof checkoutUrl !== "string" || !checkoutUrl.startsWith("https://pay.payos.vn/")) {
     console.error("payOS link creation failed", { httpStatus: payosResponse.status, code: responseBody?.code });
     return NextResponse.json({ success: false, error: "payOS chưa tạo được link. Bạn có thể chuyển khoản theo QR hoặc thử lại." }, { status: 502 });
   }
 
-  const nextMetadata = { ...metadata, payos_order_code: orderCode, payos_checkout_url: checkoutUrl };
+  const nextMetadata = { ...metadata, payos_order_code: orderCode, payos_checkout_url: checkoutUrl, ...(qrCode ? { payos_qr_code: qrCode } : {}) };
   const { data: saved, error: saveError } = await serverSupabase
     .from("transactions")
     .update({ metadata: nextMetadata })
@@ -111,9 +112,9 @@ export async function POST(request: Request) {
   if (!saved) {
     const { data: latest } = await serverSupabase.from("transactions").select("metadata").eq("id", transaction.id).maybeSingle();
     const existingUrl = latest?.metadata?.payos_checkout_url;
-    if (typeof existingUrl === "string") return NextResponse.json({ success: true, configured: true, payable: true, checkoutUrl: existingUrl });
+    if (typeof existingUrl === "string") return NextResponse.json({ success: true, configured: true, payable: true, checkoutUrl: existingUrl, qrCode: latest?.metadata?.payos_qr_code || null });
     return NextResponse.json({ success: false, error: "Đơn hàng vừa thay đổi trạng thái. Hãy tải lại trang." }, { status: 409 });
   }
 
-  return NextResponse.json({ success: true, configured: true, payable: true, checkoutUrl });
+  return NextResponse.json({ success: true, configured: true, payable: true, checkoutUrl, qrCode });
 }

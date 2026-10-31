@@ -4,7 +4,7 @@ import { requireAdmin } from "@/app/utils/adminAuth";
 
 export const dynamic = "force-dynamic";
 
-const publicFields = "id,title,slug,category,description,cover_image_url,demo_url,price_vnd,key_duration_days,stock_count,tags,highlights,is_featured,created_at,view_count,download_count";
+const publicFields = "id,title,slug,category,description,cover_image_url,demo_url,price_vnd,key_duration_days,stock_count,tags,highlights,is_featured,created_at,view_count,download_count,sales_count";
 const adminFields = `${publicFields},download_url,is_active,updated_at`;
 const httpsOrNull = (value: unknown) => value === null || value === "" || (typeof value === "string" && value.length <= 2048 && /^https:\/\//i.test(value));
 
@@ -14,7 +14,10 @@ export async function GET(request: Request) {
   let query = serverSupabase.from("products").select(manage ? adminFields : publicFields).order("is_featured", { ascending: false }).order("created_at", { ascending: false });
   if (!manage) query = query.eq("is_active", true);
   const { data, error } = await query;
-  if (error) return NextResponse.json({ success: false, error: "Product catalog is unavailable" }, { status: 503 });
+  if (error) {
+    console.error("Product catalog query failed:", error);
+    return NextResponse.json({ success: false, error: manage ? "Không tải được danh sách sản phẩm. Hãy chạy supabase_reset_and_setup.sql để đồng bộ schema." : "Product catalog is unavailable" }, { status: 503 });
+  }
   return NextResponse.json({ success: true, data: data || [] }, { headers: { "Cache-Control": manage ? "private, no-store" : "public, max-age=60, stale-while-revalidate=300" } });
 }
 

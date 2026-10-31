@@ -195,6 +195,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   is_active boolean NOT NULL DEFAULT true,
   view_count bigint NOT NULL DEFAULT 0 CHECK (view_count >= 0),
   download_count bigint NOT NULL DEFAULT 0 CHECK (download_count >= 0),
+  sales_count bigint NOT NULL DEFAULT 0 CHECK (sales_count >= 0),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (category <> 'key' OR key_duration_days IS NOT NULL)
@@ -202,6 +203,24 @@ CREATE TABLE IF NOT EXISTS public.products (
 CREATE INDEX IF NOT EXISTS products_catalog_idx ON public.products (is_active, category, created_at DESC);
 CREATE INDEX IF NOT EXISTS products_featured_idx ON public.products (is_active, is_featured DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS products_tags_idx ON public.products USING gin (tags);
+
+CREATE OR REPLACE FUNCTION public.track_product_sale()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  was_already_successful boolean := false;
+  product_id text;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN was_already_successful := OLD.status = 'success'; END IF;
+  IF NEW.status <> 'success' OR was_already_successful OR NEW.metadata->>'type' NOT IN ('product', 'key') THEN RETURN NEW; END IF;
+  product_id := NEW.metadata->>'product_id';
+  IF product_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+    UPDATE public.products SET sales_count = sales_count + 1 WHERE id = product_id::uuid;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS transactions_track_product_sale ON public.transactions;
+CREATE TRIGGER transactions_track_product_sale AFTER INSERT OR UPDATE OF status, metadata ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.track_product_sale();
 
 CREATE OR REPLACE FUNCTION public.increment_product_view(p_product_id uuid)
 RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = '' AS $$

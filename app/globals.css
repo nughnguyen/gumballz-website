@@ -30,6 +30,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .neo-callout-info { background:#E8F6FF; }.neo-callout-warning { background:#E8F6FF; }.neo-callout-success { background:#d9ffe4; }
 .neo-code { overflow-x:auto; border:3px solid var(--ink); border-radius:10px; background:#171820; color:#f8f8fa; box-shadow:5px 5px 0 var(--ink); padding:1rem; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.85rem; line-height:1.7; }
 
+.sales-marquee:hover .sales-marquee-track { animation-play-state:paused; }
+.sales-marquee-track { animation:sales-marquee 32s linear infinite; }
+.sales-marquee-group { gap:1.25rem; padding-right:1.25rem; }
+@keyframes sales-marquee { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+@media (prefers-reduced-motion:reduce) { .sales-marquee-track { animation:none; transform:none; } }
+
 .admin-shell { background:#fffdf5; color:var(--ink); }
 .admin-sidebar { background:#fff; border-right:3px solid var(--ink); }
 .admin-panel { background:white; border:3px solid var(--ink); border-radius:12px; box-shadow:5px 5px 0 var(--ink); }

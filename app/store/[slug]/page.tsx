@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Check, Download, Eye, ExternalLink, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check, Eye, ExternalLink, LoaderCircle, ShoppingBag, X } from "lucide-react";
 import { supabase } from "@/app/utils/supabaseClient";
 
-type Product = { id:string; title:string; slug:string; category:"tool"|"key"|"coiz"; description:string; cover_image_url:string|null; demo_url:string|null; price_vnd:number; key_duration_days:number|null; stock_count:number|null; tags:string[]; highlights:string[]; is_featured:boolean; view_count:number; download_count:number };
+type Product = { id:string; title:string; slug:string; category:"tool"|"key"|"coiz"; description:string; cover_image_url:string|null; demo_url:string|null; price_vnd:number; key_duration_days:number|null; stock_count:number|null; tags:string[]; highlights:string[]; is_featured:boolean; view_count:number; download_count:number; sales_count:number };
 const money=(n:number)=>n===0?"Miễn phí":`${new Intl.NumberFormat("vi-VN").format(n)} ₫`;
 const currency=(n:number)=>`${new Intl.NumberFormat("vi-VN").format(n)} ₫`;
 
@@ -74,7 +74,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug:s
         <h1 className="mt-4 text-3xl font-black leading-tight text-[#0B3D91] sm:text-4xl">{product.title}</h1>
         <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{product.description}</p>
         <div className="mt-5 flex flex-wrap gap-2">{(product.tags||[]).map(tag=><span key={tag} className="rounded-full border border-[#3BA7F2]/25 bg-[#E8F6FF] px-3 py-1 text-xs font-semibold">{tag}</span>)}</div>
-        <div className="mt-6 grid grid-cols-2 gap-3"><div className="flex items-center gap-2 rounded-xl bg-[#E8F6FF] p-3 text-sm font-bold text-[#0B3D91]"><Eye size={17} className="text-[#3BA7F2]"/>{(product.view_count||0).toLocaleString("vi-VN")} lượt xem</div><div className="flex items-center gap-2 rounded-xl bg-[#E8F6FF] p-3 text-sm font-bold text-[#0B3D91]"><Download size={17} className="text-[#3BA7F2]"/>{(product.download_count||0).toLocaleString("vi-VN")} lượt tải</div></div>
+        <div className="mt-6 grid grid-cols-2 gap-3"><div className="flex items-center gap-2 rounded-xl bg-[#E8F6FF] p-3 text-sm font-bold text-[#0B3D91]"><Eye size={17} className="text-[#3BA7F2]"/>{(product.view_count||0).toLocaleString("vi-VN")} lượt xem</div><div className="flex items-center gap-2 rounded-xl bg-[#E8F6FF] p-3 text-sm font-bold text-[#0B3D91]"><ShoppingBag size={17} className="text-[#3BA7F2]"/>{(product.sales_count||0).toLocaleString("vi-VN")} {"\u0111\u00e3 b\u00e1n"}</div></div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6"><div><strong className="inline-block rounded-xl bg-[#7FE7D6]/45 px-4 py-2 text-2xl font-black text-[#0B3D91]">{money(product.price_vnd)}</strong>{product.category==="key"&&product.key_duration_days&&<p className="mt-1 text-xs text-slate-500">Thời hạn {product.key_duration_days} ngày</p>}</div><span className={`rounded-full px-3 py-1 text-xs font-black ${inStock?"bg-[#7FE7D6]/50 text-[#0B3D91]":"bg-rose-100 text-rose-800"}`}>{inStock?"Còn hàng":"Hết hàng"}</span></div>
         {notice&&<p role="status" className="mt-4 rounded-xl bg-[#E8F6FF] p-3 text-sm font-semibold text-[#0B3D91]">{notice}</p>}
         <div className="mt-5 flex flex-wrap gap-3"><button type="button" onClick={()=>void openPaymentOptions(product)} disabled={!inStock||busy} className={`inline-flex items-center justify-center gap-2 rounded-xl bg-[#0B3D91] px-5 py-3 font-black text-white shadow-lg shadow-[#0B3D91]/20 hover:bg-[#092f70] disabled:cursor-not-allowed disabled:opacity-50`}>{busy?<><LoaderCircle className="animate-spin" size={17}/> Đang chuẩn bị…</>:product.price_vnd===0?"Nhận sản phẩm":"Mua ngay"}<ArrowUpRight size={17}/></button>{product.demo_url&&<a href={product.demo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-[#3BA7F2]/30 px-4 py-3 text-sm font-bold text-[#0B3D91]"><ExternalLink size={16}/> Xem demo</a>}</div>

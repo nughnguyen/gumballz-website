@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -40,6 +40,7 @@ if (BANK_2.id && BANK_2.account) {
 const MOMO_PHONE = "";
 
 function PaymentCard() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const amount = searchParams.get("amount") || "0";
   const content = searchParams.get("content") || "UNKNOWN";
@@ -49,6 +50,7 @@ function PaymentCard() {
 
   const [copied, setCopied] = useState("");
   const [status, setStatus] = useState("pending");
+  const [transactionType, setTransactionType] = useState("");
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
@@ -59,6 +61,7 @@ function PaymentCard() {
   const [manualReviewBusy, setManualReviewBusy] = useState(false);
   const [manualReviewMessage, setManualReviewMessage] = useState("");
   const [payosCheckoutUrl, setPayosCheckoutUrl] = useState("");
+  const [payosQrCode, setPayosQrCode] = useState("");
   const [payosLoading, setPayosLoading] = useState(false);
   const [payosError, setPayosError] = useState("");
 
@@ -93,7 +96,10 @@ function PaymentCard() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || "Chưa tạo được thanh toán payOS.");
-        if (active && data.payable && typeof data.checkoutUrl === "string") setPayosCheckoutUrl(data.checkoutUrl);
+        if (active && data.payable && typeof data.checkoutUrl === "string") {
+          setPayosCheckoutUrl(data.checkoutUrl);
+          if (typeof data.qrCode === "string") setPayosQrCode(data.qrCode);
+        }
       })
       .catch((error: unknown) => {
         if (active) setPayosError(error instanceof Error ? error.message : "payOS hiện chưa sẵn sàng.");
@@ -115,6 +121,7 @@ function PaymentCard() {
             const data = await res.json();
             if (data.success) {
                 setStatus("success");
+                if (typeof data.type === "string") setTransactionType(data.type);
                 if (data.key) setGeneratedKey(data.key);
             } else if (data.status === 'expired') {
                 setIsExpired(true);
@@ -141,9 +148,17 @@ function PaymentCard() {
   }).format(amountNum);
 
   const qrUrl =
-    method === "Momo"
+    payosQrCode && selectedBank.automatic !== false
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(payosQrCode)}`
+      : method === "Momo"
       ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|${momoPhone}|${selectedBank.name}|0|0|0|${amountNum}|${content}|transfer_myqr`
       : `https://img.vietqr.io/image/${selectedBank.id.toLowerCase()}-${selectedBank.account}-qr_only.png?amount=${amount}&addInfo=${content}&accountName=${encodeURIComponent(selectedBank.name)}`;
+
+  useEffect(() => {
+    if (status !== "success" || transactionType !== "product") return;
+    const redirect = window.setTimeout(() => router.replace("/account"), 1200);
+    return () => window.clearTimeout(redirect);
+  }, [router, status, transactionType]);
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -198,6 +213,7 @@ function PaymentCard() {
         const data = await res.json();
         if (data.success) {
           setStatus("success");
+          if (typeof data.type === "string") setTransactionType(data.type);
           if (data.key) setGeneratedKey(data.key);
           clearInterval(interval);
         } else if (data.manualReviewRequested) {
@@ -293,6 +309,7 @@ function PaymentCard() {
                       <CreditCard className="w-5 h-5 text-cyan-500" />
                       Mã QR Thanh Toán
                     </h3>
+                    <p className="text-center text-xs font-black uppercase tracking-wide text-[#0B3D91]">{payosQrCode && selectedBank.automatic !== false ? "QR payOS · xác nhận tự động" : "QR chuyển khoản ngân hàng"}</p>
                     <motion.div 
                       className="relative"
                       initial={{ scale: 0.9, opacity: 0 }}
@@ -380,8 +397,8 @@ function PaymentCard() {
                   </div>
                 </div>
 
-                {txId && method === "Banking" && selectedBank.automatic === false && !status.startsWith("success") && <div className="border-t-2 border-dashed border-slate-300 pt-4">
-                  {manualReviewRequested ? <div role="status" aria-live="polite" className="border-[3px] border-slate-900 bg-[#E8F6FF] p-4 shadow-[3px_3px_0_#1e293b]"><p className="font-black">Đang chờ Admin duyệt</p><p className="mt-1 text-sm font-semibold">Yêu cầu thanh toán của bạn đã được gửi. Đơn sẽ được xử lý sau khi Admin đối chiếu sao kê.</p></div> : <><p className="text-sm font-semibold leading-6 text-slate-600">Chuyển khoản từ ngân hàng chưa hỗ trợ tự động? Sau khi chuyển tiền, hãy gửi yêu cầu để Admin kiểm tra thủ công.</p><button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button mt-3 w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Tôi đã chuyển khoản — yêu cầu Admin duyệt"}</button></>}
+                {txId && method === "Banking" && !status.startsWith("success") && <div className="border-t-2 border-dashed border-slate-300 pt-4">
+                  {manualReviewRequested ? <div role="status" aria-live="polite" className="border-[3px] border-slate-900 bg-[#E8F6FF] p-4 shadow-[3px_3px_0_#1e293b]"><p className="font-black">Đang chờ Admin duyệt</p><p className="mt-1 text-sm font-semibold">Yêu cầu thanh toán của bạn đã được gửi. Đơn sẽ được xử lý sau khi Admin đối chiếu sao kê.</p></div> : <button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button mt-3 w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Tôi đã chuyển khoản — yêu cầu Admin duyệt"}</button>}
                   {manualReviewMessage && <p role="status" className="mt-2 text-sm font-bold">{manualReviewMessage}</p>}
                   {manualReviewRequested && <Link href="/account" className="mt-3 inline-flex items-center gap-1 text-sm font-black underline">Theo dõi trong tài khoản <ExternalLink size={14}/></Link>}
                 </div>}

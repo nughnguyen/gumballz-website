@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownToLine, ArrowRight, Box, CircleDollarSign, Clock3, KeyRound, Package, RefreshCw, Settings2, ShoppingBag, Sparkles, Users } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, Box, CircleDollarSign, Clock3, Download, KeyRound, Package, RefreshCw, Settings2, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { supabase } from "@/app/utils/supabaseClient";
 import ManualPaymentQueue from "@/app/admin/ManualPaymentQueue";
 
@@ -56,6 +56,20 @@ export default function AdminDashboard() {
   useEffect(() => { void loadStats(); }, [loadStats]);
   const maxDailyRevenue = useMemo(() => Math.max(1, ...(stats?.daily.map((day) => day.revenue) || [])), [stats]);
 
+  async function downloadProduct(transactionId: string) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch(`/api/admin/product-download?transactionId=${encodeURIComponent(transactionId)}`, {
+        headers: { Authorization: `Bearer ${data.session?.access_token || ""}` }, cache: "no-store",
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.url) throw new Error(result.error || "Download is unavailable.");
+      window.location.assign(result.url);
+    } catch (cause) {
+      window.alert(cause instanceof Error ? cause.message : "Download is unavailable.");
+    }
+  }
+
   const metrics = stats?.metrics;
   const cards = [
     { label: "Doanh thu hôm nay", value: money(metrics?.todayRevenue || 0), note: `${metrics?.todayOrders || 0} đơn đã thanh toán`, icon: CircleDollarSign, color: "bg-[#7FE7D6]" },
@@ -87,7 +101,7 @@ export default function AdminDashboard() {
     </section>
 
     <section className="neo-card overflow-hidden bg-white"><div className="flex flex-wrap items-end justify-between gap-3 p-5 sm:p-7"><div><p className="text-xs font-black tracking-widest">GIAO DỊCH MỚI NHẤT</p><h2 className="mt-1 text-2xl font-black">Đơn hàng gần đây</h2></div><span className="neo-badge">{stats?.recent.length || 0} giao dịch</span></div>
-      <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-t-[3px] border-black text-left text-sm"><thead className="bg-[#E8F6FF]"><tr>{["Mã / sản phẩm", "Khách hàng", "Thời gian", "Trạng thái", "Số tiền"].map((heading) => <th key={heading} className="px-4 py-3 font-black">{heading}</th>)}</tr></thead><tbody>{stats?.recent.map((transaction) => { const title = typeof transaction.metadata?.product_title === "string" ? transaction.metadata.product_title : transaction.metadata?.type === "wallet_topup" ? "Nạp ví" : transaction.description || "Giao dịch"; return <tr key={transaction.id} className="border-t-2 border-black/15"><td className="max-w-64 px-4 py-3"><p className="truncate font-black">{title}</p><p className="text-xs text-slate-500">{transaction.description || transaction.id.slice(0, 8)}</p></td><td className="px-4 py-3 font-mono text-xs">{transaction.user_id ? `${transaction.user_id.slice(0, 8)}…` : "Khách"}</td><td className="whitespace-nowrap px-4 py-3">{dateTime(transaction.created_at)}</td><td className="px-4 py-3"><span className={`inline-flex border-2 border-black px-2 py-1 text-xs font-black ${transaction.status === "success" ? "bg-[#7FE7D6]" : transaction.status === "pending" ? "bg-[#7FE7D6]" : "bg-[#ffb7d7]"}`}>{statusLabels[transaction.status] || transaction.status}</span></td><td className="whitespace-nowrap px-4 py-3 text-right font-black">{money(transaction.amount)}</td></tr>; })}</tbody></table>
+      <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-t-[3px] border-black text-left text-sm"><thead className="bg-[#E8F6FF]"><tr>{["Mã / sản phẩm", "Khách hàng", "Thời gian", "Trạng thái", "Số tiền"].map((heading) => <th key={heading} className="px-4 py-3 font-black">{heading}</th>)}<th className="px-4 py-3 font-black">Tải sản phẩm</th></tr></thead><tbody>{stats?.recent.map((transaction) => { const title = typeof transaction.metadata?.product_title === "string" ? transaction.metadata.product_title : transaction.metadata?.type === "wallet_topup" ? "Nạp ví" : transaction.description || "Giao dịch"; return <tr key={transaction.id} className="border-t-2 border-black/15"><td className="max-w-64 px-4 py-3"><p className="truncate font-black">{title}</p><p className="text-xs text-slate-500">{transaction.description || transaction.id.slice(0, 8)}</p></td><td className="px-4 py-3 font-mono text-xs">{transaction.user_id ? `${transaction.user_id.slice(0, 8)}…` : "Khách"}</td><td className="whitespace-nowrap px-4 py-3">{dateTime(transaction.created_at)}</td><td className="px-4 py-3"><span className={`inline-flex border-2 border-black px-2 py-1 text-xs font-black ${transaction.status === "success" ? "bg-[#7FE7D6]" : transaction.status === "pending" ? "bg-[#7FE7D6]" : "bg-[#ffb7d7]"}`}>{statusLabels[transaction.status] || transaction.status}</span></td><td className="whitespace-nowrap px-4 py-3 text-right font-black">{money(transaction.amount)}</td><td className="px-4 py-3">{transaction.status === "success" && transaction.metadata?.type === "product" && <button type="button" onClick={() => void downloadProduct(transaction.id)} className="neo-button-secondary min-h-9 px-3 py-2 text-xs"><Download size={14}/> Tải</button>}</td></tr>; })}</tbody></table>
       {loading && <p className="p-6 text-sm font-bold">Đang tải giao dịch…</p>}{!loading && !stats?.recent.length && <p className="p-6 text-sm font-bold">Chưa có giao dịch nào.</p>}</div>
     </section>
 
