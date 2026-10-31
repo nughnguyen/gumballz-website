@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { serverSupabase } from "@/app/utils/supabaseServer";
+import { readCommunityAccounts } from "@/app/utils/communityAccountFile";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -12,6 +13,10 @@ export async function GET(request: Request) {
   const { data, error, count } = await query.range((page-1)*size, page*size-1);
   if (error) return NextResponse.json({ success: false, error: "Không tải được danh sách acc." }, { status: 503 });
   const rows = await Promise.all((data || []).map(async offer => {
+    if (offer.offer_type === "community") {
+      try { return { ...offer, stock_count: (await readCommunityAccounts()).length }; }
+      catch { return { ...offer, stock_count: 0 }; }
+    }
     const table = offer.offer_type === "mystery" ? "game_account_packs" : "game_account_inventory";
     const { count: stock } = await serverSupabase.from(table).select("id", { count: "exact", head: true }).eq("offer_id", offer.id).eq("status", "available");
     return { ...offer, stock_count: stock || 0 };

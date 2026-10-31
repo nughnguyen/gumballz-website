@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/app/utils/adminAuth";
 import { checkRateLimit, rateLimitResponse } from "@/app/utils/rateLimit";
 import { serverSupabase } from "@/app/utils/supabaseServer";
+import { readCommunityAccounts } from "@/app/utils/communityAccountFile";
 
 export async function POST(request: Request) {
   const user = await getAuthenticatedUser(request);
@@ -19,6 +20,13 @@ export async function POST(request: Request) {
   const { data: offer } = await serverSupabase.from("game_account_offers").select("id,title,offer_type,price_vnd,is_active").eq("id", offerId).eq("is_active", true).maybeSingle();
   if (!offer) return NextResponse.json({ success: false, error: "Mặt hàng không khả dụng." }, { status: 404 });
   if (offer.offer_type !== "community" && quantity !== 1) return NextResponse.json({ success: false, error: "Mặt hàng này chỉ mua được một tài khoản mỗi lượt." }, { status: 400 });
+  if (offer.offer_type === "community") {
+    try {
+      if (!(await readCommunityAccounts()).length) return NextResponse.json({ success: false, error: "Kho acc cộng đồng hiện đang trống." }, { status: 409 });
+    } catch {
+      return NextResponse.json({ success: false, error: "Kho acc cộng đồng hiện không khả dụng." }, { status: 503 });
+    }
+  }
   const amount = Number(offer.price_vnd) * quantity;
   if (!Number.isSafeInteger(amount) || amount > 100_000_000) return NextResponse.json({ success: false, error: "Tổng thanh toán vượt giới hạn cho phép." }, { status: 400 });
   if (offer.offer_type === "mystery") {

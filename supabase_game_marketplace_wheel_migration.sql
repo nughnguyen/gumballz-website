@@ -106,26 +106,9 @@ BEGIN
   IF requested_quantity<1 OR requested_quantity>50 THEN RAISE EXCEPTION 'invalid_game_account_quantity'; END IF;
 
   IF offer_row.offer_type='community' THEN
-    IF TG_OP='UPDATE' AND jsonb_typeof(NEW.metadata->'reserved_game_account_ids')='array' THEN
-      FOR requested_id IN SELECT jsonb_array_elements_text(NEW.metadata->'reserved_game_account_ids') LOOP
-        SELECT * INTO account_row FROM public.game_account_inventory WHERE id=requested_id::uuid AND offer_id=offer_uuid AND status='reserved' AND transaction_id=NEW.id FOR UPDATE;
-        IF account_row.id IS NULL THEN RAISE EXCEPTION 'game_account_reservation_lost'; END IF;
-        UPDATE public.game_account_inventory SET status='sold',sold_to=NEW.user_id,reserved_at=NULL,sold_at=now() WHERE id=account_row.id RETURNING * INTO account_row;
-        deliveries:=deliveries||jsonb_build_array(jsonb_build_object('username',account_row.username,'password',account_row.password));
-        processed:=processed+1;
-      END LOOP;
-      IF processed<>requested_quantity THEN RAISE EXCEPTION 'game_account_reservation_lost'; END IF;
-    ELSE
-      FOR account_row IN SELECT * FROM public.game_account_inventory WHERE offer_id=offer_uuid AND status='available' ORDER BY random() LIMIT requested_quantity FOR UPDATE SKIP LOCKED LOOP
-        UPDATE public.game_account_inventory SET status=CASE WHEN NEW.status='success' THEN 'sold' ELSE 'reserved' END,transaction_id=NEW.id,sold_to=CASE WHEN NEW.status='success' THEN NEW.user_id ELSE NULL END,reserved_at=CASE WHEN NEW.status='pending' THEN now() ELSE NULL END,sold_at=CASE WHEN NEW.status='success' THEN now() ELSE NULL END WHERE id=account_row.id RETURNING * INTO account_row;
-        reserved_ids:=reserved_ids||jsonb_build_array(account_row.id);
-        IF NEW.status='success' THEN deliveries:=deliveries||jsonb_build_array(jsonb_build_object('username',account_row.username,'password',account_row.password)); END IF;
-        processed:=processed+1;
-      END LOOP;
-      IF processed<>requested_quantity THEN RAISE EXCEPTION 'game_account_inventory_out_of_stock'; END IF;
-      NEW.metadata:=NEW.metadata||jsonb_build_object('reserved_game_account_ids',reserved_ids,'quantity',requested_quantity);
-    END IF;
-    IF NEW.status='success' THEN NEW.metadata:=NEW.metadata||jsonb_build_object('game_account_deliveries',deliveries,'offer_title',offer_row.title,'offer_type','community'); END IF;
+    -- Community credentials are served from the private application file.
+    -- Do not reserve or duplicate that inventory in Supabase.
+    NEW.metadata:=NEW.metadata||jsonb_build_object('quantity',requested_quantity,'offer_title',offer_row.title,'offer_type','community');
     RETURN NEW;
   END IF;
 

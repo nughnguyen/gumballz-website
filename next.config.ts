@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    "/api/account/purchases": ["./private-data/league-accounts.txt.enc"],
+    "/api/game-accounts/offers": ["./private-data/league-accounts.txt.enc"],
+    "/api/game-accounts/offers/[slug]": ["./private-data/league-accounts.txt.enc"],
+    "/api/admin/game-accounts/inventory": ["./private-data/league-accounts.txt.enc"],
+  },
   async headers() {
     return [{
       source: "/:path*",
