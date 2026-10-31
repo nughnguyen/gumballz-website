@@ -355,7 +355,7 @@ export default function StorePage() {
         <div className="container mx-auto max-w-6xl">
           <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
             <Link href="/store" className="inline-flex min-h-11 items-center gap-2 border-[3px] border-slate-900 bg-white px-4 font-black shadow-[3px_3px_0_#111217] transition hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"><ArrowRight className="rotate-180" size={17}/> Quay lại cửa hàng</Link>
-            <span className="border-2 border-black bg-[#ffe600] px-3 py-2 text-xs font-black">NẠP NHANH · KHÔNG CẦN ĐĂNG NHẬP</span>
+            <span className="border-2 border-black bg-[#7FE7D6] px-3 py-2 text-xs font-black">NẠP NHANH · KHÔNG CẦN ĐĂNG NHẬP</span>
           </div>
           
           {/* Header & Tabs */}
@@ -476,7 +476,7 @@ export default function StorePage() {
                     </div>
                     <div className="lg:col-span-4 space-y-6">
                       <div className="clay-card p-6">
-                        <h3 className="font-black text-sm uppercase flex items-center gap-2 mb-4"><Star className="w-5 h-5 text-yellow-500" /> Auto-Rank</h3>
+                        <h3 className="font-black text-sm uppercase flex items-center gap-2 mb-4"><Star className="w-5 h-5 text-[#3BA7F2]" /> Auto-Rank</h3>
                         <div className="space-y-3">
                           {MC_AUTO_RANKS.map(r => (
                             <div key={r.rank} className="flex justify-between text-xs font-bold">
@@ -506,15 +506,15 @@ export default function StorePage() {
                       </div>
                       <div className="clay-card p-6 space-y-4">
                         <h3 className="font-black text-sm">THÔNG TIN CHUYỂN KHOẢN</h3>
-                        {mcPayosUrl && <div className="border-[3px] border-slate-900 bg-[#ffe600] p-4 shadow-[3px_3px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><button type="button" onClick={() => location.assign(mcPayosUrl)} className="clay-button mt-3 w-full">Mở payOS để thanh toán <ExternalLink size={15}/></button></div>}
-                        {mcPayosError && <p role="status" className="border-2 border-amber-600 bg-amber-50 p-3 text-xs font-bold">{mcPayosError}</p>}
+                        {mcPayosUrl && <div className="border-[3px] border-slate-900 bg-[#7FE7D6] p-4 shadow-[3px_3px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><button type="button" onClick={() => location.assign(mcPayosUrl)} className="clay-button mt-3 w-full">Mở payOS để thanh toán <ExternalLink size={15}/></button></div>}
+                        {mcPayosError && <p role="status" className="border-2 border-[#0B3D91] bg-[#E8F6FF] p-3 text-xs font-bold">{mcPayosError}</p>}
                         <div className="space-y-3">
                           <Row label="Ngân hàng" value={mcOrder.bankId} />
                           <Row label="Số tài khoản" value={mcOrder.accountNo} mono onCopy={() => handleCopy(mcOrder.accountNo, "acc")} copied={copied === "acc"} />
                           <Row label="Nội dung" value={mcOrder.orderCode} mono highlight onCopy={() => handleCopy(mcOrder.orderCode, "code")} copied={copied === "code"} />
                         </div>
                         <div className="text-xs text-red-600 font-bold bg-red-50 p-3 rounded-xl border-2 border-red-200">Hãy nhập ĐÚNG nội dung để hệ thống tự động cộng xu!</div>
-                        {mcReviewRequested ? <p role="status" className="border-[3px] border-slate-900 bg-amber-100 p-3 text-sm font-bold">Đang chờ Admin duyệt. Xu sẽ được cấp sau khi xác nhận tiền vào.</p> : <button type="button" disabled={mcReviewBusy} onClick={() => void requestMinecraftReview()} className="clay-button w-full disabled:opacity-60">{mcReviewBusy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản ngân hàng khác — nhờ Admin duyệt"}</button>}
+                        {mcReviewRequested ? <p role="status" className="border-[3px] border-slate-900 bg-[#E8F6FF] p-3 text-sm font-bold">Đang chờ Admin duyệt. Xu sẽ được cấp sau khi xác nhận tiền vào.</p> : <button type="button" disabled={mcReviewBusy} onClick={() => void requestMinecraftReview()} className="clay-button w-full disabled:opacity-60">{mcReviewBusy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản ngân hàng khác — nhờ Admin duyệt"}</button>}
                         {mcReviewMessage && <p role="status" className="text-xs font-bold">{mcReviewMessage}</p>}
                       </div>
                     </div>

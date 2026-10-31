@@ -122,8 +122,8 @@ function ClaimKeyContent() {
             </div>
 
             {/* Warning */}
-            <div className="mt-6 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-              <p className="text-xs text-yellow-200/80 leading-relaxed">
+            <div className="mt-6 bg-[#3BA7F2]/10 border border-[#3BA7F2]/20 rounded-xl p-4">
+              <p className="text-xs text-[#3BA7F2]/80 leading-relaxed">
                 ⚠️ <strong>Lưu ý:</strong> Vui lòng lưu key này cẩn thận. Nếu mất key, bạn sẽ không thể khôi phục.
               </p>
             </div>

@@ -132,8 +132,8 @@ export default function FreeKeyClaimPage() {
             </div>
 
             {/* Warning */}
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6">
-              <p className="text-xs text-yellow-200/80 leading-relaxed">
+            <div className="bg-[#3BA7F2]/10 border border-[#3BA7F2]/20 rounded-xl p-4 mb-6">
+              <p className="text-xs text-[#3BA7F2]/80 leading-relaxed">
                 ⚠️ <strong>Quan trọng:</strong> Key miễn phí chỉ có hiệu lực trong ngày hôm nay (đến 23:59:59). Vào ngày mai, bạn cần lấy key mới.
               </p>
             </div>

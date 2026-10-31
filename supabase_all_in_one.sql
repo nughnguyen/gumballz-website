@@ -239,6 +239,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   highlights jsonb NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(highlights) = 'array'),
   is_featured boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
+  view_count bigint NOT NULL DEFAULT 0 CHECK (view_count >= 0),
+  download_count bigint NOT NULL DEFAULT 0 CHECK (download_count >= 0),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (category <> 'key' OR key_duration_days IS NOT NULL)
@@ -246,6 +248,19 @@ CREATE TABLE IF NOT EXISTS public.products (
 CREATE INDEX IF NOT EXISTS products_catalog_idx ON public.products (is_active, category, created_at DESC);
 CREATE INDEX IF NOT EXISTS products_featured_idx ON public.products (is_active, is_featured DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS products_tags_idx ON public.products USING gin (tags);
+
+CREATE OR REPLACE FUNCTION public.increment_product_view(p_product_id uuid)
+RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = '' AS $$
+  UPDATE public.products SET view_count = view_count + 1 WHERE id = p_product_id AND is_active = true;
+$$;
+CREATE OR REPLACE FUNCTION public.increment_product_download(p_product_id uuid)
+RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = '' AS $$
+  UPDATE public.products SET download_count = download_count + 1 WHERE id = p_product_id;
+$$;
+REVOKE ALL ON FUNCTION public.increment_product_view(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.increment_product_download(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.increment_product_view(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.increment_product_download(uuid) TO service_role;
 
 -- Atomically charge wallet balance and record a successful product purchase.
 CREATE OR REPLACE FUNCTION public.purchase_product_with_wallet(

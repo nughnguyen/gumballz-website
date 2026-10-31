@@ -35,8 +35,8 @@ export default function KeyLookup() {
   }
 
   const label = result?.status === "active" ? "Đang hoạt động" : result?.status === "expired" ? "Đã hết hạn" : "Chưa kích hoạt";
-  return <section className="neo-card bg-[#fff2a8] p-5 sm:p-7" aria-labelledby="key-lookup-title">
-    <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center border-2 border-black bg-[#ffe600] shadow-[3px_3px_0_#111217]"><KeyRound size={21}/></span><div><p className="text-xs font-black uppercase tracking-[.16em]">KEY STATUS</p><h2 id="key-lookup-title" className="mt-1 text-2xl font-black">Kiểm tra key của bạn</h2><p className="mt-1 text-sm text-slate-700">Xem trạng thái và ngày hết hạn an toàn.</p></div></div>
+  return <section className="neo-card bg-[#E8F6FF] p-5 sm:p-7" aria-labelledby="key-lookup-title">
+    <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center border-2 border-black bg-[#7FE7D6] shadow-[3px_3px_0_#111217]"><KeyRound size={21}/></span><div><p className="text-xs font-black uppercase tracking-[.16em]">KEY STATUS</p><h2 id="key-lookup-title" className="mt-1 text-2xl font-black">Kiểm tra key của bạn</h2><p className="mt-1 text-sm text-slate-700">Xem trạng thái và ngày hết hạn an toàn.</p></div></div>
     <form onSubmit={lookup} className="mt-5"><label htmlFor="key-lookup-input" className="mb-2 block text-sm font-extrabold">Mã key</label><div className="flex flex-col gap-3 sm:flex-row"><input id="key-lookup-input" name="key" autoComplete="off" spellCheck={false} value={key} onChange={event => setKey(event.target.value)} placeholder="Dán key của bạn vào đây…" className="neo-field min-w-0 flex-1 font-mono text-sm"/><button type="button" onClick={pasteKey} className="neo-button-secondary shrink-0"><ClipboardPaste size={17}/> Dán từ clipboard</button></div>
       <button type="submit" disabled={busy || !key.trim()} className="neo-button mt-4 w-full sm:w-auto"><Search size={17}/>{busy ? "Đang kiểm tra…" : "Kiểm tra key"}</button>
     </form>

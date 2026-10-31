@@ -238,7 +238,7 @@ function PayContent() {
                     </div>
                     <div className="bg-slate-900 rounded-xl p-3 text-center">
                       <code className="text-cyan-300 font-mono text-sm">
-                        /napthe redeem <span className="text-yellow-300 font-black">{claimCode}</span>
+                        /napthe redeem <span className="text-[#7FE7D6] font-black">{claimCode}</span>
                       </code>
                     </div>
                     <p className="text-xs text-slate-500 font-bold text-center">Nhập lệnh trên vào chat trong game để nhận xu</p>
@@ -321,8 +321,8 @@ function PayContent() {
                     Thông Tin Chuyển Khoản
                   </h3>
 
-                  {payosUrl && <div className="border-[3px] border-slate-900 bg-[#ffe600] p-4 shadow-[4px_4px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><p className="mt-1 text-xs font-semibold">PayOS hỗ trợ chuyển khoản Napas 24/7 và tự xác nhận.</p><button type="button" onClick={() => location.assign(payosUrl)} className="clay-button mt-3 w-full">Mở payOS để thanh toán <ExternalLink size={15}/></button></div>}
-                  {payosError && <p role="status" className="border-2 border-amber-600 bg-amber-50 p-3 text-xs font-bold">{payosError} Bạn vẫn có thể dùng thông tin chuyển khoản bên dưới.</p>}
+                  {payosUrl && <div className="border-[3px] border-slate-900 bg-[#7FE7D6] p-4 shadow-[4px_4px_0_#1e293b]"><p className="text-sm font-black">Thanh toán tự động qua payOS</p><p className="mt-1 text-xs font-semibold">PayOS hỗ trợ chuyển khoản Napas 24/7 và tự xác nhận.</p><button type="button" onClick={() => location.assign(payosUrl)} className="clay-button mt-3 w-full">Mở payOS để thanh toán <ExternalLink size={15}/></button></div>}
+                  {payosError && <p role="status" className="border-2 border-[#0B3D91] bg-[#E8F6FF] p-3 text-xs font-bold">{payosError} Bạn vẫn có thể dùng thông tin chuyển khoản bên dưới.</p>}
                   <div className="space-y-4">
                     <DetailRow label="Ngân hàng"     value={bank.id}      />
                     <DetailRow label="Chủ tài khoản" value={bank.name}    />
@@ -351,7 +351,7 @@ function PayContent() {
                       </div>
                     </div>
 
-                    {manualReviewRequested ? <p role="status" className="border-[3px] border-slate-900 bg-amber-100 p-3 text-sm font-bold">Đang chờ Admin duyệt. Mã nhận xu sẽ xuất hiện sau khi thanh toán được xác nhận.</p> : <button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản ngân hàng khác — nhờ Admin duyệt"}</button>}
+                    {manualReviewRequested ? <p role="status" className="border-[3px] border-slate-900 bg-[#E8F6FF] p-3 text-sm font-bold">Đang chờ Admin duyệt. Mã nhận xu sẽ xuất hiện sau khi thanh toán được xác nhận.</p> : <button type="button" disabled={manualReviewBusy} onClick={() => void requestManualReview()} className="clay-button w-full disabled:opacity-60">{manualReviewBusy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản ngân hàng khác — nhờ Admin duyệt"}</button>}
                     {manualReviewMessage && <p role="status" className="text-xs font-bold">{manualReviewMessage}</p>}
                   </div>
 

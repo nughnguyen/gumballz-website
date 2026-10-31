@@ -26,10 +26,10 @@ const CodeBlock = ({ code, language = "lua" }: { code: string, language?: string
       <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
         <div className="flex gap-2">
           <div className="w-3 h-3 rounded-full bg-red-500" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          <div className="w-3 h-3 rounded-full bg-[#3BA7F2]" />
           <div className="w-3 h-3 rounded-full bg-green-500" />
         </div>
-        <span className="mr-3 text-[10px] font-black uppercase tracking-widest text-[#00d9f5]">{language}</span>
+        <span className="mr-3 text-[10px] font-black uppercase tracking-widest text-[#3BA7F2]">{language}</span>
         <button 
           onClick={handleCopy}
           className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
@@ -66,17 +66,17 @@ export default function DocsPage() {
               <div>
                 <h3 className="font-black text-slate-900 mb-4 px-2 uppercase text-sm tracking-wider">Getting Started</h3>
                 <nav className="space-y-1">
-                  <button onClick={() => scrollTo("intro")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "intro" ? "bg-[#dffbff] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Introduction</button>
-                  <button onClick={() => scrollTo("setup")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "setup" ? "bg-[#dffbff] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Installation</button>
+                  <button onClick={() => scrollTo("intro")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "intro" ? "bg-[#E8F6FF] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Introduction</button>
+                  <button onClick={() => scrollTo("setup")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "setup" ? "bg-[#E8F6FF] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Installation</button>
                 </nav>
               </div>
               
               <div>
                 <h3 className="font-black text-slate-900 mb-4 px-2 uppercase text-sm tracking-wider">Components</h3>
                 <nav className="space-y-1">
-                  <button onClick={() => scrollTo("window")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "window" ? "bg-[#dffbff] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Window</button>
-                  <button onClick={() => scrollTo("tabs")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "tabs" ? "bg-[#dffbff] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Tabs & Sections</button>
-                  <button onClick={() => scrollTo("elements")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "elements" ? "bg-[#dffbff] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>UI Elements</button>
+                  <button onClick={() => scrollTo("window")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "window" ? "bg-[#E8F6FF] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Window</button>
+                  <button onClick={() => scrollTo("tabs")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "tabs" ? "bg-[#E8F6FF] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>Tabs & Sections</button>
+                  <button onClick={() => scrollTo("elements")} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeSection === "elements" ? "bg-[#E8F6FF] text-[#087d92] border-2 border-black" : "text-slate-600 hover:bg-slate-200"}`}>UI Elements</button>
                 </nav>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function DocsPage() {
           <div className="flex-1 min-w-0">
             {/* Intro */}
             <section id="intro" className="mb-16">
-              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 border-2 border-black bg-[#ffe600] font-black text-black text-sm shadow-[3px_3px_0_#111217]">
+              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 border-2 border-black bg-[#7FE7D6] font-black text-black text-sm shadow-[3px_3px_0_#111217]">
                 <Terminal className="w-4 h-4" />
                 <span>Documentation v1.0.0</span>
               </div>
