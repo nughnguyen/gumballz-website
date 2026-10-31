@@ -25,13 +25,14 @@ Open <http://localhost:3000>.
 ## Fresh Supabase setup
 
 1. Create an empty Supabase project. Remove old tables yourself if you are replacing an existing database.
-2. Run `supabase_all_in_one.sql` once in Supabase SQL Editor. It combines the current schema, products, wallet, rate limits and restrictive RLS setup. It does not drop tables or application data. The older individual SQL files are retained for reference; do not run them separately after this bundle.
+2. Run `supabase_all_in_one.sql` in Supabase SQL Editor. It contains the current schema, product catalog, wallet top-ups and wallet checkout, rate limits, site visit counters, and restrictive RLS setup. It preserves table data, but refreshes policies and triggers. Review the policy changes before running it on a project with custom policies.
 3. Fill `vercel.env.template` with your own values, then add those variables to Vercel. Set `ADMIN_EMAILS` to the comma-separated allowlist of existing Supabase Auth users.
 4. Keep `SUPABASE_SERVICE_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) and payment/provider secrets on the server. Never expose them with a `NEXT_PUBLIC_` prefix.
 5. Rotate the previously committed Yeulink token and configure the replacement as `YEULINK_TOKEN`.
 
 ### Wallet payment webhooks
 
+- Store products and premium key packages can be paid from the signed-in account wallet. The required RPC functions are included in `supabase_all_in_one.sql`.
 - Configure payOS with the webhook URL `https://<your-domain>/api/webhook/payos`. Set the server-only `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, and `PAYOS_CHECKSUM_KEY` from your payOS payment channel. The app creates signed payment links and verifies the signed webhook before matching the order amount and settling the transaction.
 - For SePay, configure HMAC-SHA256 and set `SEPAY_WEBHOOK_SECRET` (recommended). If HMAC is not configured, set `SEPAY_API_KEY` to the exact key configured on the webhook. At least one must be configured.
 - If MoMo IPN is enabled, set `MOMO_ACCESS_KEY` and `MOMO_SECRET_KEY`; the webhook rejects callbacks without a valid MoMo HMAC-SHA256 signature.

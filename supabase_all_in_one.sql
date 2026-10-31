@@ -1,4 +1,4 @@
--- GumballZ Hub: consolidated clean-install schema and security setup.
+-- GumballZ Hub: consolidated schema, wallet, site statistics, rate limits, and security setup.
 -- Run in Supabase SQL Editor for a new/cleared project with the current app schema.
 -- Re-running does not remove table data; it refreshes policies and triggers.
 -- Keep SUPABASE_SERVICE_KEY / SUPABASE_SERVICE_ROLE_KEY on the server only.
@@ -68,6 +68,23 @@ CREATE TABLE IF NOT EXISTS public.api_rate_limits (
 );
 CREATE INDEX IF NOT EXISTS api_rate_limits_window_idx ON public.api_rate_limits (window_started_at);
 
+-- Footer online sessions and a separate lifetime visit counter.
+CREATE TABLE IF NOT EXISTS public.site_visit_sessions (
+  visitor_id uuid PRIMARY KEY,
+  last_seen_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS site_visit_sessions_last_seen_idx
+  ON public.site_visit_sessions (last_seen_at);
+
+CREATE TABLE IF NOT EXISTS public.site_visit_totals (
+  id smallint PRIMARY KEY CHECK (id = 1),
+  total_visits bigint NOT NULL DEFAULT 0
+);
+INSERT INTO public.site_visit_totals (id, total_visits)
+SELECT 1, count(*)
+FROM public.site_visit_sessions
+ON CONFLICT (id) DO NOTHING;
+
 CREATE OR REPLACE FUNCTION public.consume_api_rate_limit(
   p_bucket_key text,
   p_window_start timestamptz,
@@ -102,6 +119,35 @@ BEGIN
   RETURNING true INTO was_allowed;
 
   RETURN COALESCE(was_allowed, false);
+END;
+$$;
+
+-- Atomically refresh a visitor session and count each new session once.
+CREATE OR REPLACE FUNCTION public.record_site_visit(p_visitor_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  inserted_rows integer;
+BEGIN
+  INSERT INTO public.site_visit_sessions (visitor_id, last_seen_at)
+  VALUES (p_visitor_id, now())
+  ON CONFLICT (visitor_id) DO NOTHING;
+
+  GET DIAGNOSTICS inserted_rows = ROW_COUNT;
+
+  IF inserted_rows = 1 THEN
+    INSERT INTO public.site_visit_totals (id, total_visits)
+    VALUES (1, 1)
+    ON CONFLICT (id) DO UPDATE
+      SET total_visits = public.site_visit_totals.total_visits + 1;
+  ELSE
+    UPDATE public.site_visit_sessions
+    SET last_seen_at = now()
+    WHERE visitor_id = p_visitor_id;
+  END IF;
 END;
 $$;
 
@@ -201,6 +247,169 @@ CREATE INDEX IF NOT EXISTS products_catalog_idx ON public.products (is_active, c
 CREATE INDEX IF NOT EXISTS products_featured_idx ON public.products (is_active, is_featured DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS products_tags_idx ON public.products USING gin (tags);
 
+-- Atomically charge wallet balance and record a successful product purchase.
+CREATE OR REPLACE FUNCTION public.purchase_product_with_wallet(
+  p_user_id text,
+  p_product_id uuid
+)
+RETURNS TABLE(purchase_transaction_id uuid, remaining_balance bigint)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  product_row public.products%ROWTYPE;
+  wallet_balance bigint;
+  new_transaction_id uuid;
+  order_code text;
+  purchase_metadata jsonb;
+BEGIN
+  SELECT * INTO product_row
+  FROM public.products
+  WHERE id = p_product_id
+  FOR UPDATE;
+
+  IF NOT FOUND OR NOT product_row.is_active THEN
+    RAISE EXCEPTION 'product_unavailable';
+  END IF;
+  IF product_row.category = 'coiz' OR product_row.price_vnd <= 0 THEN
+    RAISE EXCEPTION 'product_not_payable_by_wallet';
+  END IF;
+  IF product_row.stock_count = 0 THEN
+    RAISE EXCEPTION 'product_out_of_stock';
+  END IF;
+
+  INSERT INTO public.wallet_accounts (user_id, balance)
+  VALUES (p_user_id, 0)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  SELECT account.balance INTO wallet_balance
+  FROM public.wallet_accounts AS account
+  WHERE account.user_id = p_user_id
+  FOR UPDATE;
+
+  IF wallet_balance < product_row.price_vnd THEN
+    RAISE EXCEPTION 'wallet_balance_insufficient';
+  END IF;
+
+  order_code := 'GZ' || upper(substr(replace(pg_catalog.gen_random_uuid()::text, '-', ''), 1, 10));
+  IF product_row.category = 'key' THEN
+    purchase_metadata := jsonb_build_object(
+      'type', 'key',
+      'category', 'mod',
+      'duration_days', product_row.key_duration_days,
+      'product_id', product_row.id,
+      'product_title', product_row.title,
+      'payment_method', 'wallet'
+    );
+  ELSE
+    purchase_metadata := jsonb_build_object(
+      'type', 'product',
+      'product_id', product_row.id,
+      'product_title', product_row.title,
+      'payment_method', 'wallet'
+    );
+  END IF;
+
+  INSERT INTO public.transactions (
+    user_id, amount, description, status, method, rewarded, metadata
+  ) VALUES (
+    p_user_id, product_row.price_vnd, order_code, 'success', 'Wallet', true, purchase_metadata
+  )
+  RETURNING id INTO new_transaction_id;
+
+  INSERT INTO public.wallet_ledger (user_id, transaction_id, entry_type, amount, description)
+  VALUES (p_user_id, new_transaction_id, 'purchase', product_row.price_vnd, product_row.title);
+
+  UPDATE public.wallet_accounts
+  SET balance = balance - product_row.price_vnd, updated_at = now()
+  WHERE user_id = p_user_id;
+
+  IF product_row.stock_count IS NOT NULL THEN
+    UPDATE public.products
+    SET stock_count = stock_count - 1, updated_at = now()
+    WHERE id = product_row.id;
+  END IF;
+
+  RETURN QUERY SELECT new_transaction_id, wallet_balance - product_row.price_vnd;
+END;
+$$;
+
+-- Purchase a premium key package directly from the wallet.
+CREATE OR REPLACE FUNCTION public.purchase_key_with_wallet(
+  p_user_id text,
+  p_category text,
+  p_duration_days integer
+)
+RETURNS TABLE(purchase_transaction_id uuid, remaining_balance bigint)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  package_price integer;
+  wallet_balance bigint;
+  new_transaction_id uuid;
+  order_code text;
+BEGIN
+  IF p_category IS NULL OR p_category NOT IN ('mod', 'roblox') THEN
+    RAISE EXCEPTION 'invalid_key_category';
+  END IF;
+
+  package_price := CASE p_duration_days
+    WHEN 1 THEN 2000
+    WHEN 7 THEN 12000
+    WHEN 30 THEN 50000
+    WHEN 365 THEN 500000
+    ELSE NULL
+  END;
+  IF package_price IS NULL THEN
+    RAISE EXCEPTION 'invalid_key_package';
+  END IF;
+
+  INSERT INTO public.wallet_accounts (user_id, balance)
+  VALUES (p_user_id, 0)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  SELECT account.balance INTO wallet_balance
+  FROM public.wallet_accounts AS account
+  WHERE account.user_id = p_user_id
+  FOR UPDATE;
+
+  IF wallet_balance < package_price THEN
+    RAISE EXCEPTION 'wallet_balance_insufficient';
+  END IF;
+
+  order_code := 'KEY' || upper(substr(replace(pg_catalog.gen_random_uuid()::text, '-', ''), 1, 12));
+  INSERT INTO public.transactions (
+    user_id, amount, description, status, method, rewarded, metadata
+  ) VALUES (
+    p_user_id,
+    package_price,
+    order_code,
+    'success',
+    'Wallet',
+    true,
+    jsonb_build_object(
+      'type', 'key',
+      'category', p_category,
+      'duration_days', p_duration_days,
+      'payment_method', 'wallet'
+    )
+  )
+  RETURNING id INTO new_transaction_id;
+
+  INSERT INTO public.wallet_ledger (user_id, transaction_id, entry_type, amount, description)
+  VALUES (p_user_id, new_transaction_id, 'purchase', package_price, 'Premium key');
+
+  UPDATE public.wallet_accounts
+  SET balance = balance - package_price, updated_at = now()
+  WHERE user_id = p_user_id;
+
+  RETURN QUERY SELECT new_transaction_id, wallet_balance - package_price;
+END;
+$$;
+
 -- Public remote configuration is read through the server API; writes remain private.
 CREATE TABLE IF NOT EXISTS public.mod_configs (
   id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
@@ -254,11 +463,19 @@ ALTER TABLE public.downloads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallet_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallet_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.api_rate_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_visit_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_visit_totals ENABLE ROW LEVEL SECURITY;
 
-REVOKE ALL ON public.transactions, public.sepay_webhook_events, public.mod_keys, public.roblox_keys, public.products, public.mod_configs, public.downloads, public.wallet_accounts, public.wallet_ledger, public.api_rate_limits FROM anon, authenticated;
-GRANT ALL ON public.transactions, public.sepay_webhook_events, public.mod_keys, public.roblox_keys, public.products, public.mod_configs, public.downloads, public.wallet_accounts, public.wallet_ledger, public.api_rate_limits TO service_role;
+REVOKE ALL ON public.transactions, public.sepay_webhook_events, public.mod_keys, public.roblox_keys, public.products, public.mod_configs, public.downloads, public.wallet_accounts, public.wallet_ledger, public.api_rate_limits, public.site_visit_sessions, public.site_visit_totals FROM anon, authenticated;
+GRANT ALL ON public.transactions, public.sepay_webhook_events, public.mod_keys, public.roblox_keys, public.products, public.mod_configs, public.downloads, public.wallet_accounts, public.wallet_ledger, public.api_rate_limits, public.site_visit_sessions, public.site_visit_totals TO service_role;
+REVOKE ALL ON FUNCTION public.purchase_product_with_wallet(text, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.purchase_product_with_wallet(text, uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.purchase_key_with_wallet(text, text, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.purchase_key_with_wallet(text, text, integer) TO service_role;
 REVOKE ALL ON FUNCTION public.consume_api_rate_limit(text, timestamptz, integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.consume_api_rate_limit(text, timestamptz, integer) TO service_role;
+REVOKE ALL ON FUNCTION public.record_site_visit(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.record_site_visit(uuid) TO service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
 -- Remove legacy policies first so repeated runs cannot leave broader policies active.
@@ -269,7 +486,7 @@ BEGIN
     SELECT policyname, tablename
     FROM pg_policies
     WHERE schemaname = 'public'
-      AND tablename IN ('transactions','sepay_webhook_events','mod_keys','roblox_keys','products','mod_configs','downloads','wallet_accounts','wallet_ledger','api_rate_limits')
+      AND tablename IN ('transactions','sepay_webhook_events','mod_keys','roblox_keys','products','mod_configs','downloads','wallet_accounts','wallet_ledger','api_rate_limits','site_visit_sessions','site_visit_totals')
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', p.policyname, p.tablename);
   END LOOP;
@@ -286,5 +503,7 @@ CREATE POLICY downloads_service_role_all ON public.downloads FOR ALL TO service_
 CREATE POLICY wallet_accounts_service_role_all ON public.wallet_accounts FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY wallet_ledger_service_role_all ON public.wallet_ledger FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY api_rate_limits_service_role_all ON public.api_rate_limits FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY site_visit_sessions_service_role_all ON public.site_visit_sessions FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY site_visit_totals_service_role_all ON public.site_visit_totals FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- The API uses service role for active config reads; no table access is exposed to browsers.
