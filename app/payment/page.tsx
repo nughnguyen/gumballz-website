@@ -109,7 +109,8 @@ function PaymentCard() {
         try {
             const queryParam = txId ? `id=${txId}` : `content=${content}`;
             const { data: sessionData } = await supabase.auth.getSession();
-            const headers = sessionData.session ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {};
+            const headers = new Headers();
+            if (sessionData.session) headers.set("Authorization", `Bearer ${sessionData.session.access_token}`);
             const res = await fetch(`/api/check-transaction?${queryParam}`, { headers, cache: "no-store" });
             const data = await res.json();
             if (data.success) {
@@ -191,7 +192,8 @@ function PaymentCard() {
       try {
         const queryParam = txId ? `id=${txId}` : `content=${content}`;
         const { data: sessionData } = await supabase.auth.getSession();
-        const headers = sessionData.session ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {};
+        const headers = new Headers();
+        if (sessionData.session) headers.set("Authorization", `Bearer ${sessionData.session.access_token}`);
         const res = await fetch(`/api/check-transaction?${queryParam}`, { headers, cache: "no-store" });
         const data = await res.json();
         if (data.success) {
