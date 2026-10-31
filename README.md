@@ -38,7 +38,7 @@ Open <http://localhost:3000>.
 - Set `VNPAY_HASH_SECRET` to the VNPay checksum secret if VNPay IPN is enabled.
 - Wallet top-ups are credited only after a verified incoming payment matches the requested amount; the ledger trigger prevents duplicate credits.
 - If a customer pays from a bank that is not connected to automatic confirmation, they can submit a manual review request on the payment page. The request appears in Admin → Dashboard; verify the incoming bank statement before approving. Approval triggers the normal purchase/key or wallet-credit flow, and the signed-in customer sees the pending/review result in `/account`.
-- Configure `CRON_SECRET` in the hosting environment and call `/api/cron/cleanup` with `Authorization: Bearer <CRON_SECRET>`. Expired pending orders are marked expired and kept for transaction history.
+- Configure `CRON_SECRET` in the Vercel Production environment. The hourly schedule in `vercel.json` requires Pro or Enterprise; Hobby supports only daily cron runs. Pending payments are marked expired after 15 minutes, then pending or expired transactions are deleted after 12 hours on the next cron run.
 - API rate limits use hashed client IPs in Supabase and return `429` with a `Retry-After` header when a limit is reached. Make sure the deployed platform provides a trusted `x-real-ip` or `x-forwarded-for` header. The cleanup endpoint removes rate-limit buckets older than three days.
 - Minecraft plugin requests to `/api/minecraft/check-order` must send `x-api-key` (or `Authorization: Bearer ...`); API keys are not accepted in query strings.
 

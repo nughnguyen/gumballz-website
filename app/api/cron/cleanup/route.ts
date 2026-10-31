@@ -24,20 +24,23 @@ export async function GET(request: Request) {
     .select("id");
 
   if (error) return NextResponse.json({ success: false, error: "Cleanup failed" }, { status: 500 });
-  const manualReviewThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data: staleReview, error: reviewError } = await serverSupabase
+  const deletionThreshold = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  const { data: deletedTransactions, error: deleteError } = await serverSupabase
     .from("transactions")
-    .update({ status: "expired" })
-    .eq("status", "pending")
-    .eq("metadata->>manual_review_requested", "true")
-    .lt("created_at", manualReviewThreshold)
+    .delete()
+    .in("status", ["pending", "expired"])
+    .lt("created_at", deletionThreshold)
     .select("id");
-  if (reviewError) return NextResponse.json({ success: false, error: "Manual review cleanup failed" }, { status: 500 });
+  if (deleteError) return NextResponse.json({ success: false, error: "Transaction cleanup failed" }, { status: 500 });
   const rateLimitRetention = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
   const { error: rateLimitError } = await serverSupabase
     .from("api_rate_limits")
     .delete()
     .lt("window_started_at", rateLimitRetention);
   if (rateLimitError) return NextResponse.json({ success: false, error: "Rate limit cleanup failed" }, { status: 500 });
-  return NextResponse.json({ success: true, expired: (stalePending?.length || 0) + (staleReview?.length || 0) });
+  return NextResponse.json({
+    success: true,
+    expired: stalePending?.length || 0,
+    deletedTransactions: deletedTransactions?.length || 0,
+  });
 }

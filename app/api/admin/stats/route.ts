@@ -35,7 +35,8 @@ export async function GET(request: Request) {
   startOfToday.setHours(0, 0, 0, 0);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const paid = rows.filter((row) => row.status === "success");
-  const revenueRows = paid.filter((row) => row.metadata?.type !== "wallet_topup");
+  // Wallet deposits are paid income too; keep their subtotal separately below.
+  const revenueRows = paid;
   const walletTopups = paid.filter((row) => row.metadata?.type === "wallet_topup");
   const sum = (items: Transaction[]) => items.reduce((total, row) => total + Number(row.amount || 0), 0);
   const revenueToday = revenueRows.filter((row) => new Date(row.created_at) >= startOfToday);
