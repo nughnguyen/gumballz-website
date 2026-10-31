@@ -253,20 +253,20 @@ function PaymentCard() {
 
   return (
     <div className="min-h-screen bg-[#FFF9F5] pt-28 pb-20 px-6">
-      <div className="container mx-auto max-w-4xl">
+      <div className="container mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
           {/* Content Grid - 2 Columns: QR + Payment Info */}
-          <div className="grid lg:grid-cols-2 gap-8 items-start max-w-[732px] mx-auto">
+          <div className="clay-card grid w-full min-w-0 gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.8fr)] lg:gap-8">
             {/* Left Column: QR + Download Button */}
-            <div className="space-y-6">
+            <div className="min-w-0">
               {/* QR Code Card */}
-              <div className="clay-card p-8">
+              <div className="w-full min-w-0">
                 {status === "success" ? (
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="space-y-6 text-center"
@@ -285,10 +285,10 @@ function PaymentCard() {
                           <Key className="w-5 h-5" /> VIP Key của bạn
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="flex-grow bg-slate-100 border-[3px] border-slate-900 p-4 rounded-xl font-mono text-lg font-black text-slate-900 shadow-[2px_2px_0px_0px_#1E293B]">
+                          <div className="min-w-0 flex-grow break-all bg-slate-100 border-[3px] border-slate-900 p-4 rounded-xl font-mono text-lg font-black text-slate-900 shadow-[2px_2px_0px_0px_#1E293B]">
                             {generatedKey}
                           </div>
-                          <button 
+                          <button
                             onClick={() => handleCopy(generatedKey, "gen-key")}
                             className="p-4 bg-purple-500 border-[3px] border-slate-900 rounded-xl text-white shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-px hover:translate-y-px transition-all"
                           >
@@ -296,9 +296,9 @@ function PaymentCard() {
                           </button>
                         </div>
                         <p className="text-xs text-slate-500 font-bold">Copy và dán vào Mod Menu để kích hoạt</p>
+
                       </div>
                     )}
-
                     <Link href="/" className="clay-button w-full flex items-center justify-center gap-2">
                       Về trang chủ <ExternalLink className="w-5 h-5" />
                     </Link>
@@ -310,19 +310,19 @@ function PaymentCard() {
                       Mã QR Thanh Toán
                     </h3>
                     <p className="text-center text-xs font-black uppercase tracking-wide text-[#0B3D91]">{payosQrCode && selectedBank.automatic !== false ? "QR payOS · xác nhận tự động" : "QR chuyển khoản ngân hàng"}</p>
-                    <motion.div 
+                    <motion.div
                       className="relative"
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div 
+                      <div
                         className={`p-4 bg-white border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_#1E293B] hover:shadow-[2px_2px_0px_0px_#1E293B] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer ${isExpired ? "opacity-20 grayscale" : ""}`}
                       >
-                        <img src={qrUrl} alt="QR" className="w-full h-auto object-contain" />
+                        <img src={qrUrl} alt="QR" className="mx-auto aspect-square w-full max-w-[360px] object-contain" />
                       </div>
                       {isExpired && (
-                        <motion.div 
+                        <motion.div
                           className="absolute inset-0 flex items-center justify-center"
                           initial={{ scale: 0, rotate: 0 }}
                           animate={{ scale: 1, rotate: -12 }}
@@ -332,7 +332,7 @@ function PaymentCard() {
                         </motion.div>
                       )}
                     </motion.div>
-                    
+
                     {/* Download QR Button */}
                     {!isExpired && (
                       <motion.button
@@ -348,11 +348,25 @@ function PaymentCard() {
                   </div>
                 )}
               </div>
-            </div>
+{status !== "success" && (
+            <div className="grid min-w-0 gap-3 border-t-2 border-dashed border-slate-300 pt-4 sm:grid-cols-2 ">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wide text-slate-600">Số tiền thanh toán</p>
+                <p className="break-words text-xl font-black leading-tight text-[#0B3D91]">{formattedAmount}</p>
+              </div>
+              {timeLeft !== null && (
+                <div className="flex min-w-0 items-center gap-2 sm:justify-self-end">
+                  <Clock className={`h-4 w-4 ${timeLeft < 60 ? "animate-pulse text-red-600" : "text-[#0B3D91]"}`} />
+                  <div><p className="text-[10px] font-bold text-slate-600">Hết hạn sau</p><p className="font-mono text-lg font-black leading-tight">{formatTime(timeLeft)}</p></div>
+                </div>
+              )}
+                        </div>
 
+              )}
+            </div>
             {/* Right Column: Payment Details */}
             {status !== "success" && (
-              <div className={`clay-card p-5 space-y-6 ${isExpired ? "opacity-30" : ""}`}>
+              <div className={`h-full min-w-0 space-y-5 break-words ${isExpired ? "opacity-30" : ""}`}>
                 <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-cyan-500" />
                   Thông Tin Chuyển Khoản
@@ -362,17 +376,20 @@ function PaymentCard() {
                 {payosLoading && <p className="text-xs font-semibold text-slate-500">Đang kết nối payOS…</p>}
                 {payosError && <p role="status" className="border-2 border-[#0B3D91] bg-[#E8F6FF] p-3 text-xs font-bold">{payosError} Bạn vẫn có thể chuyển khoản theo thông tin bên dưới.</p>}
 
-                <div className="space-y-4">
-                  {banks.length > 1 && <select aria-label="Chọn tài khoản nhận tiền" value={selectedBank.account} onChange={(event) => { const bank = banks.find((item) => item.account === event.target.value); if (bank) setSelectedBank({ ...bank, note: bank.note || "", automatic: bank.automatic !== false }); }} className="w-full border-[3px] border-slate-900 bg-white p-3 font-bold">{banks.map((bank) => <option key={`${bank.id}-${bank.account}`} value={bank.account}>{bank.id} · {bank.account} · {bank.name}</option>)}</select>}{selectedBank.note && <p className="border-2 border-cyan-300 bg-cyan-50 p-3 text-sm font-semibold">{selectedBank.note}</p>}<p className="text-xs font-black uppercase">{selectedBank.automatic === false ? "Tài khoản này cần admin đối chiếu thủ công" : "Giao dịch tự động"}</p><DetailRow label="Ngân hàng" value={selectedBank.id} />
-                  <DetailRow label="Chủ tài khoản" value={selectedBank.name} />
-                  <DetailRow
+                <div className="min-w-0 space-y-4">
+                  {banks.length > 1 && <select aria-label="Chọn tài khoản nhận tiền" value={selectedBank.account} onChange={(event) => { const bank = banks.find((item) => item.account === event.target.value); if (bank) setSelectedBank({ ...bank, note: bank.note || "", automatic: bank.automatic !== false }); }} className="w-full border-[3px] border-slate-900 bg-white p-3 font-bold">{banks.map((bank) => <option key={`${bank.id}-${bank.account}`} value={bank.account}>{bank.id} · {bank.account} · {bank.name}</option>)}</select>}{selectedBank.note && <p className="border-2 border-cyan-300 bg-cyan-50 p-3 text-sm font-semibold">{selectedBank.note}</p>}<p className="text-xs font-black uppercase">{selectedBank.automatic === false ? "Tài khoản này cần admin đối chiếu thủ công" : "Giao dịch tự động"}</p><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="min-w-0 border-2 border-slate-200 bg-white px-3 py-2"><DetailRow label="Ngân hàng" value={selectedBank.id} stacked /></div>
+
+                    <div className="min-w-0 border-2 border-slate-200 bg-white px-3 py-2"><DetailRow label="Chủ tài khoản" value={selectedBank.name} stacked /></div>
+                  <div className="min-w-0 border-2 border-slate-200 bg-white px-3 py-2"><DetailRow
                     label="Số tài khoản"
                     value={selectedBank.account}
                     onCopy={() => handleCopy(selectedBank.account, "acc")}
                     copied={copied === "acc"}
-                    isMono
-                  />
-                  <div className="border-t-2 border-dashed border-slate-200 pt-4">
+                    isMono stacked /></div>
+                  </div>
+                  <div className="grid gap-3 border-t-2 border-dashed border-slate-200 pt-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)] xl:items-start">
+                    <div className="min-w-0">
                     <DetailRow
                       label="Nội dung CK"
                       value={content}
@@ -381,7 +398,7 @@ function PaymentCard() {
                       copied={copied === "content"}
                       isMono
                     />
-                    <div className="mt-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
+                    </div><div className="p-3 bg-red-50 border-2 border-red-200 rounded-xl">
                       <p className="text-xs text-red-700 font-bold flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
                         Nhập chính xác nội dung để hệ thống đối chiếu và xử lý đúng đơn hàng sau khi xác nhận thanh toán.
@@ -404,29 +421,9 @@ function PaymentCard() {
                 </div>}
               </div>
             )}
+
           </div>
 
-          {/* Amount Card - Full Width Horizontal Rectangle */}
-          {status !== "success" && (
-            <div className="clay-card p-6 bg-linear-to-br from-cyan-400 to-cyan-500 relative overflow-hidden max-w-[732px] mx-auto">
-              <div className="relative z-10 flex items-center justify-center gap-8">
-                <div className="text-center">
-                  <div className="text-slate-900/60 text-xs font-black uppercase tracking-wider mb-1">Số tiền thanh toán</div>
-                  <div className="text-4xl md:text-5xl font-black text-slate-900">{formattedAmount}</div>
-                </div>
-                
-                {timeLeft !== null && (
-                  <div className="flex items-center gap-2 bg-white/30 backdrop-blur-md px-4 py-3 rounded-full border-2 border-slate-900/10">
-                    <Clock className={`w-4 h-4 ${timeLeft < 60 ? "text-red-600 animate-pulse" : "text-slate-900"}`} />
-                    <span className="text-xs font-bold text-slate-900/60">Hết hạn sau:</span>
-                    <span className="font-mono font-black text-slate-900 text-lg">{formatTime(timeLeft)}</span>
-                  </div>
-                )}
-              </div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            </div>
-          )}
         </motion.div>
 
         {/* Footer Note */}
@@ -442,25 +439,26 @@ function PaymentCard() {
   );
 }
 
-function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = false }: {
+function DetailRow({ label, value, highlight = false, onCopy, copied, isMono = false, stacked = false }: {
   label: string;
   value: string;
   highlight?: boolean;
   onCopy?: () => void;
   copied?: boolean;
   isMono?: boolean;
+  stacked?: boolean;
 }) {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between items-center">
-        <span className="text-slate-600 text-xs font-bold uppercase">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className={`font-bold ${highlight ? "text-cyan-500" : "text-slate-900"} ${isMono ? "font-mono" : ""}`}>
+      <div className={`flex min-w-0 gap-2 ${stacked ? "flex-col items-start" : "items-center justify-between"}`}>
+        <span className="shrink-0 text-slate-600 text-xs font-bold uppercase">{label}</span>
+        <div className={`flex min-w-0 items-center gap-2 ${stacked ? "w-full" : ""}`}>
+          <span className={`min-w-0 break-all font-bold ${stacked ? "flex-1 text-left" : "text-right"} ${highlight ? "text-cyan-500" : "text-slate-900"} ${isMono ? "font-mono" : ""}`}>
             {value}
           </span>
           {onCopy && (
-            <button 
-              onClick={onCopy} 
+            <button
+              onClick={onCopy}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-slate-400" />}
