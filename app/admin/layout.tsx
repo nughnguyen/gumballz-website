@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Box, LayoutDashboard, LogOut, Menu, Package, Settings2, ShieldCheck, X, KeyRound } from "lucide-react";
+import { ArrowLeft, Box, Gamepad2, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, X, KeyRound } from "lucide-react";
 import { supabase } from "@/app/utils/supabaseClient";
 
 const links = [
   { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/admin/products", label: "Sản phẩm", icon: Package },
   { href: "/admin/downloads", label: "Tài nguyên tải", icon: Box },
+  { href: "/admin/game-accounts", label: "Tài khoản game", icon: Gamepad2 },
   { href: "/admin/keys", label: "Quản lý key", icon: KeyRound },
-  { href: "/admin/mod-config", label: "Cấu hình", icon: Settings2 },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
