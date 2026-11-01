@@ -31,7 +31,8 @@ export async function readCommunityAccounts(): Promise<CommunityAccount[]> {
 
 export function accountsForTransaction(accounts: CommunityAccount[], transactionId: string, quantity: number) {
   if (!accounts.length) return [];
-  const count = Math.max(1, Math.min(50, quantity));
+  const requestedCount = Number.isSafeInteger(quantity) ? quantity : 1;
+  const count = Math.min(accounts.length, Math.max(1, requestedCount));
   const start = createHash("sha256").update(transactionId).digest().readUInt32BE(0) % accounts.length;
   return Array.from({ length: count }, (_, index) => accounts[(start + index) % accounts.length]);
 }

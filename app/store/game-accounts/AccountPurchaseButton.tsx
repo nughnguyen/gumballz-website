@@ -10,7 +10,7 @@ const currency=(n:number)=>`${new Intl.NumberFormat("vi-VN").format(n)} ₫`;
 
 export default function AccountPurchaseButton({offerId,price,packId,disabled=false,label="Mua ngay",quantityEnabled=false,maxQuantity=1,warrantyTerms="",riskNotice="",refundPolicy=""}:Props){
   const router=useRouter();const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[balance,setBalance]=useState(0),[note,setNote]=useState(""),[quantity,setQuantity]=useState(1),[accepted,setAccepted]=useState(false);
-  const cap=Math.max(1,Math.min(50,maxQuantity));const total=price*quantity;
+  const cap=Math.max(1,maxQuantity);const total=price*quantity;
   async function start(method:"wallet"|"banking"){
     setBusy(true);setNote("");try{const {data}=await supabase.auth.getSession();if(!data.session){router.push(`/login?next=${encodeURIComponent(location.pathname)}`);return}
       const res=await fetch("/api/game-accounts/checkout",{method:"POST",headers:{Authorization:`Bearer ${data.session.access_token}`,"Content-Type":"application/json"},body:JSON.stringify({offerId,packId,quantity,paymentMethod:method})});const result=await res.json();if(!res.ok||!result.success){setNote(result.error||"Không thể tạo đơn.");return}setOpen(false);if(result.paidWithWallet||result.free){router.push("/account");return}const expiry=Math.floor(Date.now()/1000)+600;router.push(`/payment?amount=${result.amount}&content=${encodeURIComponent(result.content)}&method=Banking&expiry=${expiry}&txId=${encodeURIComponent(result.id)}`)

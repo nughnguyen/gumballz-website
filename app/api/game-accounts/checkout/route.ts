@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const packId = typeof body?.packId === "string" ? body.packId : null;
   const quantity = body?.quantity === undefined ? 1 : Number(body.quantity);
   const method = body?.paymentMethod;
-  if (!/^[0-9a-f-]{36}$/i.test(offerId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 50 || !["wallet", "banking"].includes(method)) {
+  if (!/^[0-9a-f-]{36}$/i.test(offerId) || !Number.isSafeInteger(quantity) || quantity < 1 || !["wallet", "banking"].includes(method)) {
     return NextResponse.json({ success: false, error: "Yêu cầu mua hàng không hợp lệ." }, { status: 400 });
   }
   const { data: offer } = await serverSupabase.from("game_account_offers").select("id,title,offer_type,price_vnd,is_active").eq("id", offerId).eq("is_active", true).maybeSingle();
@@ -22,7 +22,9 @@ export async function POST(request: Request) {
   if (offer.offer_type !== "community" && quantity !== 1) return NextResponse.json({ success: false, error: "Mặt hàng này chỉ mua được một tài khoản mỗi lượt." }, { status: 400 });
   if (offer.offer_type === "community") {
     try {
-      if (!(await readCommunityAccounts()).length) return NextResponse.json({ success: false, error: "Kho acc cộng đồng hiện đang trống." }, { status: 409 });
+      const communityAccounts = await readCommunityAccounts();
+      if (!communityAccounts.length) return NextResponse.json({ success: false, error: "Kho acc cộng đồng hiện đang trống." }, { status: 409 });
+      if (quantity > communityAccounts.length) return NextResponse.json({ success: false, error: "Kho không đủ số lượng acc bạn chọn." }, { status: 409 });
     } catch {
       return NextResponse.json({ success: false, error: "Kho acc cộng đồng hiện không khả dụng." }, { status: 503 });
     }
