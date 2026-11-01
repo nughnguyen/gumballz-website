@@ -7,11 +7,19 @@ import { checkRateLimit, rateLimitResponse } from "@/app/utils/rateLimit";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const categoryUrls = [
+const freeFireCategoryUrls = [
   "https://shoptyseisei.net/tai-khoan/acc-duoi-1m",
   "https://shoptyseisei.net/tai-khoan/acc-free-fire",
   "https://shoptyseisei.net/tai-khoan/acc-ff-7m-den-15m",
   "https://shoptyseisei.net/tai-khoan/acc-sieu-pham-tren-15m",
+];
+const lienQuanCategoryUrls = [
+  "https://shoptyseisei.net/tai-khoan/acc-lienquan-duoi-500k",
+  "https://shoptyseisei.net/tai-khoan/reg-lien-quan-duoi-1m",
+  "https://shoptyseisei.net/tai-khoan/acc-lien-quan-duoi-2m",
+  "https://shoptyseisei.net/tai-khoan/acc-lien-quan-2-5m",
+  "https://shoptyseisei.net/tai-khoan/acc-lien-quan-5-10m",
+  "https://shoptyseisei.net/tai-khoan/nick-lien-quan-cuc-pham",
 ];
 
 function decodeHtml(value: string) {
@@ -61,11 +69,12 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const categoryId = typeof body?.categoryId === "string" ? body.categoryId : "";
   if (!/^[0-9a-f-]{36}$/i.test(categoryId)) return NextResponse.json({ success:false, error:"Chọn danh mục trước khi đồng bộ." }, { status:400 });
-  const { data: category, error: categoryError } = await serverSupabase.from("external_game_account_categories").select("id,title,source,markup_vnd").eq("id",categoryId).maybeSingle();
+  const { data: category, error: categoryError } = await serverSupabase.from("external_game_account_categories").select("id,title,source,game,markup_vnd").eq("id",categoryId).maybeSingle();
   if (categoryError || !category) return NextResponse.json({ success:false, error:"Không tìm thấy danh mục." }, { status:404 });
   const categoryMarkup = Number(category.markup_vnd);
   const fetchPage=async(url:string)=>{const response=await fetch(url,{cache:"no-store",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"GumballzAuthorizedCatalogSync/1.0"}});if(!response.ok)throw new Error(`source_http_${response.status}`);return response.text()};
-  let pages:string[]=[];
+  const categoryUrls = category.game === "lien_quan" ? lienQuanCategoryUrls : freeFireCategoryUrls;
+  const pages:string[]=[];
   try {
     const firstPages=await Promise.all(categoryUrls.map(fetchPage));
     pages.push(...firstPages);

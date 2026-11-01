@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState("");
+  const [cleaningExpired, setCleaningExpired] = useState(false);
+  const [transactionMessage, setTransactionMessage] = useState("");
 
   const loadStats = useCallback(async (background = false) => {
     if (background) setRefreshing(true); else setLoading(true);
@@ -84,6 +86,28 @@ export default function AdminDashboard() {
     }
   }
 
+  async function deleteExpiredTransactions() {
+    if (!window.confirm("Xóa các giao dịch đã hết hạn hơn 12 giờ? Đơn đã gửi yêu cầu Admin duyệt sẽ được giữ lại.")) return;
+    setCleaningExpired(true);
+    setTransactionMessage("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/transactions", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${data.session?.access_token || ""}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ deleteExpired: true }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "Không xóa được giao dịch hết hạn.");
+      setTransactionMessage(`Đã xóa ${Number(result.deleted) || 0} giao dịch hết hạn.`);
+      await loadStats(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không xóa được giao dịch hết hạn.");
+    } finally {
+      setCleaningExpired(false);
+    }
+  }
+
   const metrics = stats?.metrics;
   const cards = [
     { label: "Doanh thu hôm nay", value: money(metrics?.todayRevenue || 0), note: `${metrics?.todayOrders || 0} đơn đã thanh toán`, icon: CircleDollarSign, color: "bg-[#7FE7D6]" },
@@ -114,7 +138,7 @@ export default function AdminDashboard() {
       <article className="neo-card bg-[#E8F6FF] p-5 sm:p-7"><p className="text-xs font-black tracking-widest">HOẠT ĐỘNG</p><h2 className="mt-1 text-2xl font-black">Cửa hàng</h2><div className="mt-5 space-y-3">{[{ label: "Sản phẩm đang bán", value: metrics?.activeProducts ?? 0, icon: Package }, { label: "Khách có giao dịch", value: metrics?.customers ?? 0, icon: Users }, { label: "Đã nạp vào ví", value: money(metrics?.walletTopups || 0), icon: CircleDollarSign }].map(({ label, value, icon: Icon }) => <div key={label} className="flex items-center justify-between gap-3 border-2 border-black bg-white p-3"><span className="flex min-w-0 items-center gap-2 text-sm font-bold"><Icon size={17} className="shrink-0"/>{label}</span><b className="shrink-0 text-right">{loading ? "…" : value}</b></div>)}</div></article>
     </section>
 
-    <section className="neo-card overflow-hidden bg-white"><div className="flex flex-wrap items-end justify-between gap-3 p-5 sm:p-7"><div><p className="text-xs font-black tracking-widest">GIAO DỊCH MỚI NHẤT</p><h2 className="mt-1 text-2xl font-black">Đơn hàng gần đây</h2></div><span className="neo-badge">{stats?.recent.length || 0} giao dịch</span></div>
+    <section className="neo-card overflow-hidden bg-white"><div className="flex flex-wrap items-end justify-between gap-3 p-5 sm:p-7"><div><p className="text-xs font-black tracking-widest">GIAO DỊCH MỚI NHẤT</p><h2 className="mt-1 text-2xl font-black">Đơn hàng gần đây</h2>{transactionMessage&&<p role="status" className="mt-2 text-sm font-bold text-emerald-800">{transactionMessage}</p>}</div><div className="flex flex-wrap items-center gap-2"><span className="neo-badge">{stats?.recent.length || 0} giao dịch</span><button type="button" onClick={()=>void deleteExpiredTransactions()} disabled={cleaningExpired} className="neo-button-secondary min-h-9 px-3 py-2 text-xs disabled:opacity-50"><Trash2 size={14}/>{cleaningExpired?"Đang dọn…":"Xóa giao dịch hết hạn"}</button></div></div>
       <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-t-[3px] border-black text-left text-sm"><thead className="bg-[#E8F6FF]"><tr>{["Mã / sản phẩm", "Khách hàng", "Thời gian", "Trạng thái", "Số tiền"].map((heading) => <th key={heading} className="px-4 py-3 font-black">{heading}</th>)}<th className="px-4 py-3 font-black">Thao tác</th></tr></thead><tbody>{stats?.recent.map((transaction) => { const title = typeof transaction.metadata?.product_title === "string" ? transaction.metadata.product_title : transaction.metadata?.type === "wallet_topup" ? "Nạp ví" : transaction.description || "Giao dịch"; return <tr key={transaction.id} className="border-t-2 border-black/15"><td className="max-w-64 px-4 py-3"><p className="truncate font-black">{title}</p><p className="text-xs text-slate-500">{transaction.description || transaction.id.slice(0, 8)}</p></td><td className="px-4 py-3 font-mono text-xs">{transaction.user_id ? `${transaction.user_id.slice(0, 8)}…` : "Khách"}</td><td className="whitespace-nowrap px-4 py-3">{dateTime(transaction.created_at)}</td><td className="px-4 py-3"><span className={`inline-flex border-2 border-black px-2 py-1 text-xs font-black ${transaction.status === "success" ? "bg-[#7FE7D6]" : transaction.status === "pending" ? "bg-[#7FE7D6]" : "bg-[#ffb7d7]"}`}>{statusLabels[transaction.status] || transaction.status}</span></td><td className="whitespace-nowrap px-4 py-3 text-right font-black">{money(transaction.amount)}</td><td className="px-4 py-3">{transaction.status !== "success" && <button type="button" onClick={() => void deleteTransaction(transaction)} disabled={!!deletingId} className="neo-button-secondary min-h-9 px-3 py-2 text-xs disabled:opacity-50">{deletingId === transaction.id ? "Đang xóa…" : <><Trash2 size={14}/> Xóa</>}</button>}</td></tr>; })}</tbody></table>
       {loading && <p className="p-6 text-sm font-bold">Đang tải giao dịch…</p>}{!loading && !stats?.recent.length && <p className="p-6 text-sm font-bold">Chưa có giao dịch nào.</p>}</div>
     </section>

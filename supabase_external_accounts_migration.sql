@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS public.external_game_account_categories (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.external_game_account_categories
+  ADD COLUMN IF NOT EXISTS game text NOT NULL DEFAULT 'free_fire';
 ALTER TABLE public.external_game_account_categories ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.external_game_account_categories FROM anon, authenticated;
 GRANT ALL ON public.external_game_account_categories TO service_role;
