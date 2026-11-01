@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Box, Gamepad2, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, X, KeyRound, TicketPercent } from "lucide-react";
+import { ArrowLeft, Box, Gamepad2, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, X, KeyRound, TicketPercent, RefreshCw } from "lucide-react";
 import { supabase } from "@/app/utils/supabaseClient";
 
 const links = [
   { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/admin/products", label: "Sản phẩm", icon: Package },
   { href: "/admin/vouchers", label: "Voucher", icon: TicketPercent },
+  { href: "/admin/external-accounts", label: "Danh mục acc ngoài", icon: RefreshCw },
   { href: "/admin/downloads", label: "Tài nguyên tải", icon: Box },
   { href: "/admin/game-accounts", label: "Tài khoản game", icon: Gamepad2 },
   { href: "/admin/keys", label: "Quản lý key", icon: KeyRound },
