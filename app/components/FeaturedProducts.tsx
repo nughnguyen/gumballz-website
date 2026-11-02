@@ -22,7 +22,7 @@ export default function FeaturedProducts() {
   useEffect(()=>{setSlide(0);setTransitionEnabled(true)},[itemsPerView]);
   const canSlide=products.length>itemsPerView;
   const trackProducts=canSlide?[...products,...products.slice(0,itemsPerView)]:products;
-  useEffect(()=>{if(!active||!canSlide)return;const timer=window.setInterval(()=>setSlide(current=>current>=products.length-1?products.length:current+1),2000);return()=>window.clearInterval(timer)},[active,canSlide,products.length]);
+  useEffect(()=>{if(!active||!canSlide)return;const timer=window.setInterval(()=>setSlide(current=>current>=products.length-1?products.length:current+1),5000);return()=>window.clearInterval(timer)},[active,canSlide,products.length]);
 
   function handleTrackTransitionEnd(event:TransitionEvent<HTMLDivElement>){
     if(event.target!==event.currentTarget||!canSlide||slide!==products.length)return;
