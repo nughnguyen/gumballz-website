@@ -92,12 +92,13 @@ export async function POST(request: Request) {
   if (!listings.length) return NextResponse.json({ success:false, error:"Không đọc được danh sách acc từ các trang nguồn." }, { status:502 });
 
   const ids = listings.map(item => item.source_account_id);
-  const { data: existing, error: lookupError } = await serverSupabase.from("external_game_accounts").select("source_account_id,status").eq("category_id",categoryId).eq("source",category.source).in("source_account_id",ids);
+  const { data: existing, error: lookupError } = await serverSupabase.from("external_game_accounts").select("source_account_id,status,admin_hidden").eq("category_id",categoryId).eq("source",category.source).in("source_account_id",ids);
   if (lookupError) return NextResponse.json({ success:false, error:"Chưa có bảng đồng bộ. Hãy chạy migration trước." }, { status:503 });
   const statuses = new Map((existing||[]).map(row => [row.source_account_id,row.status]));
+  const hiddenIds = new Set((existing||[]).filter(row => row.admin_hidden).map(row => row.source_account_id));
   const generation = randomUUID();
   const timestamp = new Date().toISOString();
-  const rows = listings.map(item => ({ ...item, category_id:categoryId, source:category.source, markup_vnd:categoryMarkup, price_vnd:item.original_price_vnd+categoryMarkup, sync_generation:generation, last_seen_at:timestamp, updated_at:timestamp, is_active:!['reserved','sold'].includes(statuses.get(item.source_account_id)||''), ...(statuses.has(item.source_account_id) ? { status:['reserved','sold'].includes(statuses.get(item.source_account_id)||'') ? statuses.get(item.source_account_id) : 'active' } : {}) }));
+  const rows = listings.map(item => ({ ...item, category_id:categoryId, source:category.source, markup_vnd:categoryMarkup, price_vnd:item.original_price_vnd+categoryMarkup, sync_generation:generation, last_seen_at:timestamp, updated_at:timestamp, admin_hidden:hiddenIds.has(item.source_account_id), is_active:!hiddenIds.has(item.source_account_id)&&!['reserved','sold'].includes(statuses.get(item.source_account_id)||''), ...(statuses.has(item.source_account_id) ? { status:['reserved','sold'].includes(statuses.get(item.source_account_id)||'') ? statuses.get(item.source_account_id) : 'active' } : {}) }));
   const { error: saveError } = await serverSupabase.from("external_game_accounts").upsert(rows,{onConflict:"category_id,source,source_account_id"});
   if (saveError) return NextResponse.json({ success:false, error:"Không lưu được danh sách acc." }, { status:503 });
   const { error: staleError } = await serverSupabase.from("external_game_accounts").update({is_active:false,status:"unavailable",updated_at:timestamp}).eq("category_id",categoryId).eq("status","active").neq("sync_generation",generation);

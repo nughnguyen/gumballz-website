@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS public.external_game_accounts (
   price_vnd bigint NOT NULL CHECK (price_vnd >= 0),
   price_tier text NOT NULL CHECK (price_tier IN ('under_2m','2m_7m','7m_15m','super')),
   is_active boolean NOT NULL DEFAULT true,
+  admin_hidden boolean NOT NULL DEFAULT false,
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active','reserved','sold','unavailable')),
   sync_generation uuid NOT NULL,
   last_seen_at timestamptz NOT NULL DEFAULT now(),
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS public.external_game_accounts (
   UNIQUE (source, source_account_id)
 );
 ALTER TABLE public.external_game_accounts ADD COLUMN IF NOT EXISTS category_id uuid REFERENCES public.external_game_account_categories(id) ON DELETE SET NULL;
+ALTER TABLE public.external_game_accounts ADD COLUMN IF NOT EXISTS admin_hidden boolean NOT NULL DEFAULT false;
 ALTER TABLE public.external_game_accounts DROP CONSTRAINT IF EXISTS external_game_accounts_source_source_account_id_key;
 CREATE UNIQUE INDEX IF NOT EXISTS external_game_accounts_category_source_account_uidx
   ON public.external_game_accounts (category_id, source, source_account_id);
