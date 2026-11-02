@@ -1,0 +1,3 @@
+-- Product detail gallery images uploaded by admins.
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS gallery_urls text[] NOT NULL DEFAULT '{}';

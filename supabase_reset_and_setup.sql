@@ -1,4 +1,4 @@
-﻿-- GumballZ Hub: consolidated schema, wallet, site statistics, rate limits, and security setup.
+-- GumballZ Hub: consolidated schema, wallet, site statistics, rate limits, and security setup.
 -- Run in Supabase SQL Editor for a new/cleared project with the current app schema.
 -- This reset script is intentionally destructive; it recreates the application schema from scratch.
 -- Keep SUPABASE_SERVICE_KEY / SUPABASE_SERVICE_ROLE_KEY on the server only.
@@ -593,6 +593,7 @@ ALTER TABLE public.products
   ADD CONSTRAINT products_category_check CHECK (category IN ('tool','key','coiz','game_account')),
   ADD COLUMN IF NOT EXISTS account_sale_mode text,
   ADD COLUMN IF NOT EXISTS account_screenshots text[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS gallery_urls text[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_account_sale_mode_check;
 ALTER TABLE public.products
   ADD CONSTRAINT products_account_sale_mode_check CHECK (
