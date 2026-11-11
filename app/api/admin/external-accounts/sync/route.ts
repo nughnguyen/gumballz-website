@@ -101,7 +101,40 @@ export async function POST(request: Request) {
   const rows = listings.map(item => ({ ...item, category_id:categoryId, source:category.source, markup_vnd:categoryMarkup, price_vnd:item.original_price_vnd+categoryMarkup, sync_generation:generation, last_seen_at:timestamp, updated_at:timestamp, admin_hidden:hiddenIds.has(item.source_account_id), is_active:!hiddenIds.has(item.source_account_id)&&!['reserved','sold'].includes(statuses.get(item.source_account_id)||''), ...(statuses.has(item.source_account_id) ? { status:['reserved','sold'].includes(statuses.get(item.source_account_id)||'') ? statuses.get(item.source_account_id) : 'active' } : {}) }));
   const { error: saveError } = await serverSupabase.from("external_game_accounts").upsert(rows,{onConflict:"category_id,source,source_account_id"});
   if (saveError) return NextResponse.json({ success:false, error:"Không lưu được danh sách acc." }, { status:503 });
-  const { error: staleError } = await serverSupabase.from("external_game_accounts").update({is_active:false,status:"unavailable",updated_at:timestamp}).eq("category_id",categoryId).eq("status","active").neq("sync_generation",generation);
-  if (staleError) return NextResponse.json({ success:false, error:"Đã nhập danh sách nhưng không cập nhật được acc đã hết khỏi nguồn." }, { status:503 });
+  const { data: staleAccounts, error: staleLookupError } = await serverSupabase
+    .from("external_game_accounts")
+    .select("id")
+    .eq("category_id", categoryId)
+    .eq("source", category.source)
+    .neq("sync_generation", generation);
+  if (staleLookupError) return NextResponse.json({ success:false, error:"Đã nhập danh sách nhưng không kiểm tra được acc đã hết khỏi nguồn." }, { status:503 });
+
+  const staleIds = (staleAccounts || []).map(account => account.id);
+  if (staleIds.length) {
+    const { data: soldTransactions, error: transactionLookupError } = await serverSupabase
+      .from("transactions")
+      .select("metadata")
+      .eq("metadata->>type", "external_game_account")
+      .eq("status", "success")
+      .in("metadata->>external_account_id", staleIds);
+    if (transactionLookupError) return NextResponse.json({ success:false, error:"Đã nhập danh sách nhưng không kiểm tra được giao dịch acc." }, { status:503 });
+
+    const soldIds = [...new Set((soldTransactions || [])
+      .map(transaction => transaction.metadata?.external_account_id)
+      .filter((id): id is string => typeof id === "string" && staleIds.includes(id)))];
+    if (soldIds.length) {
+      const { error: soldUpdateError } = await serverSupabase
+        .from("external_game_accounts")
+        .update({ is_active:false, status:"sold", updated_at:timestamp })
+        .in("id", soldIds);
+      if (soldUpdateError) return NextResponse.json({ success:false, error:"Đã nhập danh sách nhưng không thể giữ lại acc đã bán trên web." }, { status:503 });
+    }
+
+    const deleteIds = staleIds.filter(id => !soldIds.includes(id));
+    if (deleteIds.length) {
+      const { error: deleteError } = await serverSupabase.from("external_game_accounts").delete().in("id", deleteIds);
+      if (deleteError) return NextResponse.json({ success:false, error:"Đã nhập danh sách nhưng không thể xóa acc không còn ở nguồn." }, { status:503 });
+    }
+  }
   return NextResponse.json({success:true, imported:listings.length, markup_vnd:categoryMarkup, synced_at:timestamp});
 }
