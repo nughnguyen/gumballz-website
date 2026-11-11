@@ -100,7 +100,10 @@ export async function POST(request: Request) {
   const timestamp = new Date().toISOString();
   const rows = listings.map(item => ({ ...item, category_id:categoryId, source:category.source, markup_vnd:categoryMarkup, price_vnd:item.original_price_vnd+categoryMarkup, sync_generation:generation, last_seen_at:timestamp, updated_at:timestamp, admin_hidden:hiddenIds.has(item.source_account_id), is_active:!hiddenIds.has(item.source_account_id)&&!['reserved','sold'].includes(statuses.get(item.source_account_id)||''), ...(statuses.has(item.source_account_id) ? { status:['reserved','sold'].includes(statuses.get(item.source_account_id)||'') ? statuses.get(item.source_account_id) : 'active' } : {}) }));
   const { error: saveError } = await serverSupabase.from("external_game_accounts").upsert(rows,{onConflict:"category_id,source,source_account_id"});
-  if (saveError) return NextResponse.json({ success:false, error:"Không lưu được danh sách acc." }, { status:503 });
+  if (saveError) {
+    console.error("External account sync upsert failed", { code:saveError.code, message:saveError.message, details:saveError.details, hint:saveError.hint });
+    return NextResponse.json({ success:false, error:`Không lưu được danh sách acc (${saveError.code || "DB error"}): ${saveError.message}` }, { status:503 });
+  }
   const { data: staleAccounts, error: staleLookupError } = await serverSupabase
     .from("external_game_accounts")
     .select("id")
