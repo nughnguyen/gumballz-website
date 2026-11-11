@@ -5,7 +5,7 @@ VALUES (
   'game-account-screenshots',
   'game-account-screenshots',
   true,
-  5242880,
+  10485760,
   ARRAY['image/jpeg','image/png','image/webp']
 )
 ON CONFLICT (id) DO UPDATE SET

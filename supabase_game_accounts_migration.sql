@@ -46,7 +46,7 @@ CREATE POLICY product_game_accounts_service_role_all ON public.product_game_acco
 
 -- Public screenshots contain account previews only, never login credentials.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('game-account-screenshots', 'game-account-screenshots', true, 5242880, ARRAY['image/jpeg','image/png','image/webp'])
+VALUES ('game-account-screenshots', 'game-account-screenshots', true, 10485760, ARRAY['image/jpeg','image/png','image/webp'])
 ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
