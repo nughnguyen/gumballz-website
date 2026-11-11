@@ -71,7 +71,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug:s
 
   return <main className="min-h-screen bg-[#E8F6FF] px-5 pb-20 pt-32 text-[#12304f] md:px-10"><div className="mx-auto max-w-6xl">
     <Link href="/store" className="inline-flex items-center gap-2 text-sm font-extrabold text-[#0B3D91] hover:underline"><ArrowLeft size={16}/> Cửa hàng</Link>
-    <div className="mt-6 grid overflow-hidden rounded-3xl border border-[#0B3D91]/15 bg-white shadow-[0_18px_60px_rgba(11,61,145,.12)] lg:grid-cols-[1.08fr_.92fr]">
+    <div className="mt-6 grid grid-cols-1 overflow-hidden rounded-3xl border border-[#0B3D91]/15 bg-white shadow-[0_18px_60px_rgba(11,61,145,.12)]">
       <div className="bg-gradient-to-br from-[#E8F6FF] to-[#d7f4ef] p-4 sm:p-6">
         <div className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl border border-[#0B3D91]/10 bg-white shadow-inner">
           {activeImage?<img key={activeImage} src={activeImage} alt={`${product.title} — ảnh ${activeImageIndex+1}`} className="size-full object-contain transition-opacity duration-300"/>:<div className="grid size-full place-items-center text-7xl font-black text-[#0B3D91]">GZ</div>}
