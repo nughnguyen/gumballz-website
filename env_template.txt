@@ -9,6 +9,10 @@ SUPABASE_SERVICE_KEY=
 
 # Application URL (for generating links)
 NEXT_PUBLIC_APP_URL=
+# Public community and support links shown on the contact page
+NEXT_PUBLIC_DISCORD_URL=
+NEXT_PUBLIC_TELEGRAM_URL=
+NEXT_PUBLIC_ZALO_URL=
 
 # Yeumoney API (Optional - for future integration)
 # YEUMONEY_API_KEY=your-yeumoney-api-key
