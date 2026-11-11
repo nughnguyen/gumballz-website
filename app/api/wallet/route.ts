@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   const [{ data: account, error: accountError }, { data: ledger, error: ledgerError }] = await Promise.all([
     serverSupabase.from("wallet_accounts").select("balance").eq("user_id", user.id).maybeSingle(),
-    serverSupabase.from("wallet_ledger").select("id,amount,entry_type,description,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+    serverSupabase.from("wallet_ledger").select("id,amount,entry_type,description,created_at").eq("user_id", user.id).eq("hidden_from_history", false).order("created_at", { ascending: false }).limit(20),
   ]);
   if (accountError || ledgerError) return NextResponse.json({ success: false, error: "Wallet is unavailable" }, { status: 503 });
   return NextResponse.json({ success: true, balance: account?.balance ?? 0, ledger: ledger || [] }, { headers: { "Cache-Control": "private, no-store" } });

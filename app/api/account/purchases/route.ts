@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser(request);
   if (!user) return NextResponse.json({ success: false }, { status: 401 });
-  const { data, error } = await serverSupabase.from("transactions").select("id,amount,status,metadata,created_at").eq("user_id", user.id).in("metadata->>type", ["product", "key", "game_account", "game_account_offer_purchase", "external_game_account", "lucky_wheel_spin_fee", "lucky_wheel_prize", "wallet_topup"]).order("created_at", { ascending: false }).limit(50);
+  const { data, error } = await serverSupabase.from("transactions").select("id,amount,status,metadata,created_at").eq("user_id", user.id).eq("hidden_from_history", false).in("metadata->>type", ["product", "key", "game_account", "game_account_offer_purchase", "external_game_account", "lucky_wheel_spin_fee", "lucky_wheel_prize", "wallet_topup"]).order("created_at", { ascending: false }).limit(50);
   if (error) return NextResponse.json({ success: false, error: "Could not load purchases" }, { status: 503 });
   const purchases = data || [];
   const communityIds = [...new Set(purchases.filter((row) => row.metadata?.type === "game_account_offer_purchase" && row.status === "success" && row.metadata?.offer_type === "community").map((row) => row.metadata.offer_id).filter((id): id is string => typeof id === "string"))];

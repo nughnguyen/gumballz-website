@@ -15,8 +15,10 @@ CREATE TABLE IF NOT EXISTS public.wallet_ledger (
   entry_type text NOT NULL CHECK (entry_type IN ('topup','purchase','refund','adjustment')),
   amount bigint NOT NULL CHECK (amount > 0),
   description text,
+  hidden_from_history boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.wallet_ledger ADD COLUMN IF NOT EXISTS hidden_from_history boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS wallet_ledger_user_created_idx ON public.wallet_ledger (user_id, created_at DESC);
 
 CREATE OR REPLACE FUNCTION public.credit_wallet_topup()

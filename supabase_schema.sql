@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   transaction_id text,
   rewarded boolean NOT NULL DEFAULT false,
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(metadata) = 'object'),
+  hidden_from_history boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS public.wallet_ledger (
   entry_type text NOT NULL CHECK (entry_type IN ('topup','purchase','refund','adjustment')),
   amount bigint NOT NULL CHECK (amount > 0),
   description text,
+  hidden_from_history boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS wallet_ledger_user_created_idx ON public.wallet_ledger (user_id, created_at DESC);
